@@ -8,8 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // lang is set dynamically per locale by HtmlLang in [locale]/layout.tsx
   return (
-    <html lang="fr">
+    <html suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );

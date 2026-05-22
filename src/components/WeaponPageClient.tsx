@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import DataTable from "@/components/ui/DataTable";
 import { type ColumnDef } from "@tanstack/react-table";
 import { fetchGzJson, unrealPathToPublic } from "@/lib/utils";
 
-// Mapping slug → nom de fichier GZ
+// Mapping slug → GZ filename (top of file, with WEAPON_ICON)
 const WEAPON_FILES: Record<string, string> = {
   bow:      "TLSkillPcLooks_Weapon_Bow",
   crossbow: "TLSkillPcLooks_Weapon_Crossbow",
@@ -18,6 +19,19 @@ const WEAPON_FILES: Record<string, string> = {
   sword:    "TLSkillPcLooks_Weapon_Sword",
   sword2h:  "TLSkillPcLooks_Weapon_Sword2h",
   wand:     "TLSkillPcLooks_Weapon_Wand",
+};
+
+const WEAPON_ICON: Record<string, string> = {
+  bow:      "/Image/Weapon/Bow.png",
+  crossbow: "/Image/Weapon/CrossBow.png",
+  dagger:   "/Image/Weapon/Dagger.png",
+  gauntlet: "/Image/Weapon/Gauntlet.png",
+  orb:      "/Image/Weapon/Orb.png",
+  spear:    "/Image/Weapon/Spear.png",
+  staff:    "/Image/Weapon/Staff.png",
+  sword:    "/Image/Weapon/Sword.png",
+  sword2h:  "/Image/Weapon/Sword2h.png",
+  wand:     "/Image/Weapon/Hand.png",
 };
 
 interface SkillRow {
@@ -46,6 +60,15 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
   const weaponFile = WEAPON_FILES[weapon];
   const weaponName = t(`names.${weapon}` as Parameters<typeof t>[0], { defaultValue: weapon });
 
+  // Guard: unknown weapon slug — render error immediately, skip data fetch
+  if (!weaponFile) {
+    return (
+      <div className="rounded-xl border p-4 text-sm" style={{ background: "var(--bg-card)", borderColor: "var(--red)", color: "var(--red)" }}>
+        ⚠️ Unknown weapon: {weapon}
+      </div>
+    );
+  }
+
   const columns: ColumnDef<SkillRow, unknown>[] = useMemo(() => [
     {
       accessorKey: "icon",
@@ -54,7 +77,7 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
       cell: (i) => {
         const src = i.getValue() as string;
         return src
-          ? <img src={src} alt="" width={40} height={40} loading="lazy" className="rounded" style={{ imageRendering: "pixelated" }} />
+          ? <Image src={src} alt="" width={40} height={40} className="rounded" style={{ imageRendering: "pixelated" }} unoptimized />
           : <div className="w-10 h-10 rounded" style={{ background: "var(--border)" }} />;
       },
     },
@@ -70,21 +93,13 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
     { accessorKey: "mp",          header: t("cols.mp") },
     { accessorKey: "hp",          header: t("cols.hp") },
     { accessorKey: "cooldown",    header: t("cols.cooldown") },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [weapon]);
+  ], [weapon, t]);
 
   useEffect(() => {
-    if (!weaponFile) {
-      setError(`Unknown weapon: ${weapon}`);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setData([]);
-
     async function load() {
+      setLoading(true);
+      setError(null);
+      setData([]);
       try {
         const [formulaRaw, optionalRaw, looksRaw, skillRaw] = await Promise.all([
           fetchGzJson("/data/TLFormulaParameterNew.gz"),
@@ -115,8 +130,6 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
           const optional = optionalRows[key] ?? {};
           const skill = skillRows[key] ?? {};
 
-          // Unreal: /Game/Image/Skill/Active/M_WP_BOW_Normal_ATK.M_WP_BOW_Normal_ATK
-          // Local:  /Image/Skill/Active/M_WP_BOW_Normal_ATK.png  (servi depuis public/)
           const iconUrl = unrealPathToPublic(value.IconPath?.AssetPathName);
 
           rows.push({
@@ -143,8 +156,7 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
     }
 
     load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weapon, weaponFile]);
+  }, [weapon, weaponFile, t]);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -155,7 +167,7 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
           style={{ background: "var(--accent-glow)", border: "1px solid var(--border-bright)" }}
         >
           {WEAPON_ICON[weapon]
-            ? <img src={WEAPON_ICON[weapon]} alt={weapon} width={36} height={36} style={{ objectFit: "contain" }} />
+            ? <Image src={WEAPON_ICON[weapon]} alt={weapon} width={36} height={36} style={{ objectFit: "contain" }} unoptimized />
             : "⚔️"
           }
         </div>
@@ -184,7 +196,7 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
       {!loading && !error && (
         <>
           <div className="mb-3 text-sm" style={{ color: "var(--text-muted)" }}>
-            {data.length} compétences
+            {t("skillCount", { count: data.length })}
           </div>
           <DataTable data={data} columns={columns} searchPlaceholder={t("search")} />
         </>
@@ -192,19 +204,6 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
     </div>
   );
 }
-
-const WEAPON_ICON: Record<string, string> = {
-  bow:      "/Image/Weapon/Bow.png",
-  crossbow: "/Image/Weapon/CrossBow.png",
-  dagger:   "/Image/Weapon/Dagger.png",
-  gauntlet: "/Image/Weapon/Gauntlet.png",
-  orb:      "/Image/Weapon/Orb.png",
-  spear:    "/Image/Weapon/Spear.png",
-  staff:    "/Image/Weapon/Staff.png",
-  sword:    "/Image/Weapon/Sword.png",
-  sword2h:  "/Image/Weapon/Sword2h.png",
-  wand:     "/Image/Weapon/Hand.png",
-};
 
 
 

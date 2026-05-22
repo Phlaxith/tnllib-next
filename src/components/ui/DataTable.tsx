@@ -16,12 +16,12 @@ interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T, unknown>[];
   searchPlaceholder?: string;
-  searchKey?: string;
 }
 
 export default function DataTable<T>({ data, columns, searchPlaceholder = "Rechercher…" }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const table = useReactTable({
     data,
@@ -42,16 +42,16 @@ export default function DataTable<T>({ data, columns, searchPlaceholder = "Reche
         <input
           type="text"
           placeholder={searchPlaceholder}
-          value={globalFilter ?? ""}
+          value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
           className="w-full pl-9 pr-4 py-2 rounded-lg text-sm border outline-none focus:ring-1"
           style={{
             background: "var(--bg-card)",
-            borderColor: "var(--border)",
+            borderColor: searchFocused ? "var(--accent)" : "var(--border)",
             color: "var(--text-primary)",
           }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
         />
       </div>
 
@@ -62,7 +62,7 @@ export default function DataTable<T>({ data, columns, searchPlaceholder = "Reche
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => (
-                  <th key={header.id} onClick={header.column.getToggleSortingHandler()}>
+                  <th key={header.id} scope="col" onClick={header.column.getToggleSortingHandler()}>
                     <div className="flex items-center gap-1">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {header.column.getCanSort() && (
@@ -108,4 +108,3 @@ export default function DataTable<T>({ data, columns, searchPlaceholder = "Reche
     </div>
   );
 }
-

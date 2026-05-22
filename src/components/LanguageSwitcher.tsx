@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { useCallback } from "react";
 import { routing } from "@/i18n/routing";
 
 const FLAG: Record<string, string> = { fr: "🇫🇷", en: "🇬🇧" };
@@ -10,12 +11,12 @@ export default function LanguageSwitcher({ currentLocale }: { currentLocale: str
   const pathname = usePathname();
   const router = useRouter();
 
-  function switchLocale(locale: string) {
+  const switchLocale = useCallback((locale: string) => {
     // pathname looks like /fr/bestiary → replace /fr with /locale
     const segments = pathname.split("/");
     segments[1] = locale;
     router.push(segments.join("/") || "/");
-  }
+  }, [pathname, router]);
 
   return (
     <div className="flex gap-1 p-1 rounded-lg" style={{ background: "var(--bg-primary)" }}>

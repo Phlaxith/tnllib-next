@@ -176,6 +176,7 @@
     "title": "{name} — Skills",
     "subtitle": "Data extracted from the game.",
     "search": "Search a skill…",
+    "skillCount": "{count} skills",
     "loading": "Loading data…",
     "error": "Unable to load data. Missing file in public/data/",
     "cols": {

@@ -1,12 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home, Swords, Fish, Trophy, Calculator, BookOpen,
-  ChevronDown, ChevronRight, Skull, Package
+  ChevronDown, ChevronRight, Skull, Package,
+  type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -18,54 +20,74 @@ type NavItem = {
   children?: NavItem[];
 };
 
+// Static navigation config — component references, no JSX, no runtime dependency
+type NavConfig = {
+  labelKey: string;
+  hrefSuffix?: string;
+  Icon?: LucideIcon;
+  children?: NavConfig[];
+};
+
+const NAV_CONFIG: NavConfig[] = [
+  { labelKey: "home",        hrefSuffix: "/",                    Icon: Home },
+  { labelKey: "bestiary",    hrefSuffix: "/bestiary",             Icon: Skull },
+  {
+    labelKey: "items3d",
+    Icon: Package,
+    children: [
+      { labelKey: "itemsWeapons", hrefSuffix: "/items/weapons" },
+    ],
+  },
+  {
+    labelKey: "tables",
+    Icon: BookOpen,
+    children: [
+      { labelKey: "achievements", hrefSuffix: "/achievements", Icon: Trophy },
+      { labelKey: "fishing",      hrefSuffix: "/fishing",      Icon: Fish },
+    ],
+  },
+  {
+    labelKey: "weapons",
+    Icon: Swords,
+    children: [
+      { labelKey: "weaponMastery", hrefSuffix: "/weapons/mastery" },
+      { labelKey: "bow",           hrefSuffix: "/weapons/bow" },
+      { labelKey: "crossbow",      hrefSuffix: "/weapons/crossbow" },
+      { labelKey: "dagger",        hrefSuffix: "/weapons/dagger" },
+      { labelKey: "orb",           hrefSuffix: "/weapons/orb" },
+      { labelKey: "spear",         hrefSuffix: "/weapons/spear" },
+      { labelKey: "staff",         hrefSuffix: "/weapons/staff" },
+      { labelKey: "sword",         hrefSuffix: "/weapons/sword" },
+      { labelKey: "sword2h",       hrefSuffix: "/weapons/sword2h" },
+      { labelKey: "wand",          hrefSuffix: "/weapons/wand" },
+      { labelKey: "gauntlet",      hrefSuffix: "/weapons/gauntlet" },
+    ],
+  },
+  {
+    labelKey: "calculators",
+    Icon: Calculator,
+    children: [
+      { labelKey: "calcDamage",     hrefSuffix: "/calculator/damage" },
+      { labelKey: "calcGroupBuffs", hrefSuffix: "/calculator/group-buffs" },
+    ],
+  },
+];
+
+function buildNavItems(config: NavConfig[], base: string): NavItem[] {
+  return config.map((item) => ({
+    labelKey: item.labelKey,
+    href:     item.hrefSuffix !== undefined ? `${base}${item.hrefSuffix}` : undefined,
+    icon:     item.Icon ? <item.Icon size={16} /> : undefined,
+    children: item.children ? buildNavItems(item.children, base) : undefined,
+  }));
+}
+
 export default function Sidebar({ locale }: { locale: string }) {
   const t = useTranslations("nav");
   const base = `/${locale}`;
 
-  const NAV: NavItem[] = [
-    { labelKey: "home", href: `${base}/`, icon: <Home size={16} /> },
-    { labelKey: "bestiary", href: `${base}/bestiary`, icon: <Skull size={16} /> },
-    {
-      labelKey: "items3d",
-      icon: <Package size={16} />,
-      children: [
-        { labelKey: "itemsWeapons", href: `${base}/items/weapons` },
-      ],
-    },
-    {
-      labelKey: "tables",
-      icon: <BookOpen size={16} />,
-      children: [
-        { labelKey: "achievements", href: `${base}/achievements`, icon: <Trophy size={16} /> },
-        { labelKey: "fishing", href: `${base}/fishing`, icon: <Fish size={16} /> },
-      ],
-    },
-    {
-      labelKey: "weapons",
-      icon: <Swords size={16} />,
-      children: [
-        { labelKey: "weaponMastery", href: `${base}/weapons/mastery` },
-        { labelKey: "bow",           href: `${base}/weapons/bow` },
-        { labelKey: "crossbow",      href: `${base}/weapons/crossbow` },
-        { labelKey: "dagger",        href: `${base}/weapons/dagger` },
-        { labelKey: "orb",           href: `${base}/weapons/orb` },
-        { labelKey: "spear",         href: `${base}/weapons/spear` },
-        { labelKey: "staff",         href: `${base}/weapons/staff` },
-        { labelKey: "sword",         href: `${base}/weapons/sword` },
-        { labelKey: "sword2h",       href: `${base}/weapons/sword2h` },
-        { labelKey: "wand",          href: `${base}/weapons/wand` },
-        { labelKey: "gauntlet",      href: `${base}/weapons/gauntlet` },
-      ],
-    },
-    {
-      labelKey: "calculators",
-      icon: <Calculator size={16} />,
-      children: [
-        { labelKey: "calcDamage",     href: `${base}/calculator/damage` },
-        { labelKey: "calcGroupBuffs", href: `${base}/calculator/group-buffs` },
-      ],
-    },
-  ];
+  // Rebuild NAV only when the locale changes
+  const NAV = useMemo(() => buildNavItems(NAV_CONFIG, base), [base]);
 
   return (
     <aside
@@ -75,13 +97,13 @@ export default function Sidebar({ locale }: { locale: string }) {
       {/* Logo */}
       <div className="p-5 border-b" style={{ borderColor: "var(--border)" }}>
         <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="https://assets.playnccdn.com/common/tl.ico"
             alt="TL"
             width={28}
             height={28}
             className="rounded"
+            unoptimized
           />
           <div>
             <div className="font-bold text-base" style={{ color: "var(--text-primary)" }}>TL Library</div>
@@ -113,7 +135,9 @@ export default function Sidebar({ locale }: { locale: string }) {
 function NavLink({ item, t }: { item: NavItem; t: ReturnType<typeof useTranslations<"nav">> }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(true);
-  const isActive = item.href ? pathname === item.href || (item.href.endsWith("/") && pathname === item.href.slice(0, -1)) : false;
+  const isActive = item.href
+    ? pathname === item.href || (item.href.endsWith("/") && pathname === item.href.slice(0, -1))
+    : false;
   const label = t(item.labelKey as Parameters<typeof t>[0]);
 
   if (item.children) {
@@ -121,6 +145,7 @@ function NavLink({ item, t }: { item: NavItem; t: ReturnType<typeof useTranslati
       <div>
         <button
           onClick={() => setOpen(!open)}
+          aria-expanded={open}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
           style={{ color: "var(--text-secondary)" }}
         >
@@ -154,6 +179,3 @@ function NavLink({ item, t }: { item: NavItem; t: ReturnType<typeof useTranslati
     </Link>
   );
 }
-
-
-

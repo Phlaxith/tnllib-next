@@ -104,7 +104,7 @@ export default function MonsterViewer({ modelUrl, animationName, height = 360 }:
             <PlaceholderMonster />
           )}
           <ContactShadows position={[0, -0.4, 0]} opacity={0.4} scale={4} blur={2} far={3} />
-          <Environment preset="night" />
+          <Environment preset="lobby" />
         </Suspense>
 
         <OrbitControls

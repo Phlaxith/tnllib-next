@@ -176,6 +176,7 @@
     "title": "{name} — Compétences",
     "subtitle": "Données extraites du jeu.",
     "search": "Rechercher une compétence…",
+    "skillCount": "{count} compétences",
     "loading": "Chargement des données…",
     "error": "Impossible de charger les données. Fichier manquant dans public/data/",
     "cols": {

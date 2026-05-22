@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 interface SliderFieldProps {
   label: string;
   value: number;
@@ -10,10 +12,12 @@ interface SliderFieldProps {
 }
 
 export default function SliderField({ label, value, min, max, step = 1, onChange }: SliderFieldProps) {
+  const id = useId();
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex justify-between items-center">
-        <label className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+        <label htmlFor={id} className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
           {label}
         </label>
         <span
@@ -24,6 +28,7 @@ export default function SliderField({ label, value, min, max, step = 1, onChange
         </span>
       </div>
       <input
+        id={id}
         type="range"
         min={min}
         max={max}
@@ -34,4 +39,3 @@ export default function SliderField({ label, value, min, max, step = 1, onChange
     </div>
   );
 }
-

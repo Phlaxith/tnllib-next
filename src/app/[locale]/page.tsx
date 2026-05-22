@@ -1,24 +1,34 @@
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Swords, Fish, Trophy, Calculator, Skull, ChevronRight } from "lucide-react";
+import { Swords, Fish, Trophy, Calculator, Skull, ChevronRight, type LucideIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "home" });
   return { title: `TL Library — ${t("title")}` };
 }
 
+// Static config: store Icon component references, not JSX elements
+type SectionConfig = {
+  key: string;
+  href: string;
+  Icon: LucideIcon;
+  color: string;
+  badgeKey?: string;
+};
+
+const SECTIONS: SectionConfig[] = [
+  { key: "bestiary",    href: "bestiary",          Icon: Skull,      color: "var(--red)",    badgeKey: "sections.bestiary.badge" },
+  { key: "calculator",  href: "calculator/damage", Icon: Calculator, color: "var(--accent)" },
+  { key: "weapons",     href: "weapons/bow",        Icon: Swords,     color: "var(--gold)" },
+  { key: "achievements",href: "achievements",       Icon: Trophy,     color: "var(--yellow)" },
+  { key: "fishing",     href: "fishing",            Icon: Fish,       color: "var(--green)" },
+];
+
 export default function HomePage() {
   const t = useTranslations("home");
-
-  const SECTIONS = [
-    { key: "bestiary",   href: "bestiary",           icon: <Skull size={24} />,      color: "var(--red)",    badge: t("sections.bestiary.badge") },
-    { key: "calculator", href: "calculator/damage",  icon: <Calculator size={24} />, color: "var(--accent)", badge: undefined },
-    { key: "weapons",    href: "weapons/bow",        icon: <Swords size={24} />,     color: "var(--gold)",   badge: undefined },
-    { key: "achievements",href:"achievements",       icon: <Trophy size={24} />,     color: "var(--yellow)", badge: undefined },
-    { key: "fishing",    href: "fishing",            icon: <Fish size={24} />,       color: "var(--green)",  badge: undefined },
-  ] as const;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -34,9 +44,6 @@ export default function HomePage() {
         <h1 className="text-5xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
           TL<span style={{ color: "var(--accent)" }}>Library</span>
         </h1>
-        <p className="text-lg max-w-2xl mx-auto" style={{ color: "var(--text-secondary)" }}>
-          {t("subtitle")}
-        </p>
       </div>
 
       {/* Cards */}
@@ -50,12 +57,12 @@ export default function HomePage() {
           >
             <div className="flex items-center justify-between">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${s.color}20`, color: s.color }}>
-                {s.icon}
+                <s.Icon size={24} />
               </div>
               <div className="flex items-center gap-2">
-                {s.badge && (
+                {s.badgeKey && (
                   <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--accent-glow)", color: "var(--accent-bright)" }}>
-                    {s.badge}
+                    {t(s.badgeKey as Parameters<typeof t>[0])}
                   </span>
                 )}
                 <ChevronRight size={16} className="transition-transform group-hover:translate-x-1" style={{ color: "var(--text-muted)" }} />
@@ -63,10 +70,10 @@ export default function HomePage() {
             </div>
             <div>
               <div className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-                {t(`sections.${s.key}.title`)}
+                {t(`sections.${s.key}.title` as Parameters<typeof t>[0])}
               </div>
               <div className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                {t(`sections.${s.key}.desc`)}
+                {t(`sections.${s.key}.desc` as Parameters<typeof t>[0])}
               </div>
             </div>
           </Link>

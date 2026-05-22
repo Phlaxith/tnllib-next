@@ -14,6 +14,7 @@ export function unrealPathToPublic(assetPath: string | undefined): string {
 /** Decompress a gzipped JSON file fetched from /data/ */
 export async function fetchGzJson(url: string): Promise<unknown> {
   const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch "${url}": HTTP ${res.status} ${res.statusText}`);
   const ds = new DecompressionStream("gzip");
   const decompressed = res.body!.pipeThrough(ds);
   return new Response(decompressed).json();
