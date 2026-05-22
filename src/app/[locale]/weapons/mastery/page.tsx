@@ -66,8 +66,7 @@ export default function WeaponMasteryPage() {
       }
     }
     load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [t]);
 
   return (
     <div className="max-w-3xl mx-auto">

@@ -23,6 +23,7 @@ export default function DataTable<T>({ data, columns, searchPlaceholder = "Reche
   const [globalFilter, setGlobalFilter] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table returns unmemoizable functions; known incompatibility with React Compiler
   const table = useReactTable({
     data,
     columns,

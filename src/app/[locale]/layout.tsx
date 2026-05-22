@@ -26,9 +26,10 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <HtmlLang locale={locale} />
-      <div className="flex min-h-screen">
+      {/* h-screen + overflow-hidden sur le wrapper pour que height:100% se propage aux enfants */}
+      <div className="flex h-screen overflow-hidden">
         <Sidebar locale={locale} />
-        <main className="flex-1 ml-64 p-8 animate-fade-in">
+        <main className="flex-1 ml-64 p-8 overflow-y-auto animate-fade-in">
           {children}
         </main>
       </div>

@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import LanguageSwitcher from "./LanguageSwitcher";
+import ThemeToggle from "./ThemeToggle";
 
 type NavItem = {
   labelKey: string;
@@ -121,6 +122,7 @@ export default function Sidebar({ locale }: { locale: string }) {
 
       {/* Footer */}
       <div className="p-3 border-t flex flex-col gap-2" style={{ borderColor: "var(--border)" }}>
+        <ThemeToggle />
         <LanguageSwitcher currentLocale={locale} />
         <div className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
           <a href="https://ko-fi.com/" target="_blank" rel="noreferrer">☕ Ko-fi</a>
@@ -170,8 +172,7 @@ function NavLink({ item, t }: { item: NavItem; t: ReturnType<typeof useTranslati
       className={cn("flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all")}
       style={{
         color: isActive ? "var(--accent-bright)" : "var(--text-secondary)",
-        background: isActive ? "var(--accent-glow)" : "transparent",
-        borderLeft: isActive ? "2px solid var(--accent)" : "2px solid transparent",
+        background: isActive ? "var(--accent-glow)" : "transparent"
       }}
     >
       {item.icon && <span style={{ color: isActive ? "var(--accent)" : "var(--text-muted)" }}>{item.icon}</span>}

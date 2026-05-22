@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import DataTable from "@/components/ui/DataTable";
 import { type ColumnDef } from "@tanstack/react-table";
 import { Trophy } from "lucide-react";
@@ -20,7 +21,7 @@ export default function AchievementsPage() {
   const columns: ColumnDef<AchievementRow, unknown>[] = [
     {
       accessorKey: "image", header: t("cols.icon"), enableSorting: false,
-      cell: (i) => { const src = i.getValue() as string; return src ? <img src={src} alt="" width={48} height={48} loading="lazy" className="rounded" /> : null; },
+      cell: (i) => { const src = i.getValue() as string; return src ? <Image src={src} alt="" width={48} height={48} loading="lazy" className="rounded" unoptimized /> : null; },
     },
     { accessorKey: "Title",       header: t("cols.title") },
     { accessorKey: "Description", header: t("cols.description") },
@@ -55,8 +56,7 @@ export default function AchievementsPage() {
       }
     }
     load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [t]);
 
   return (
     <div className="max-w-6xl mx-auto">

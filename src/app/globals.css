@@ -1,23 +1,45 @@
 @import "tailwindcss";
 
+/* ── Dark theme (default) ── */
 :root {
-  --bg-primary: #0d0f1a;
-  --bg-secondary: #131629;
-  --bg-card: #1a1f35;
-  --bg-card-hover: #1f2540;
-  --border: #2a3060;
-  --border-bright: #3d4a8a;
-  --accent: #5b7cf6;
-  --accent-glow: #5b7cf640;
-  --accent-bright: #7a96ff;
-  --text-primary: #e8eaf6;
+  --bg-primary:     #0d0f1a;
+  --bg-secondary:   #131629;
+  --bg-card:        #1a1f35;
+  --bg-card-hover:  #1f2540;
+  --border:         #2a3060;
+  --border-bright:  #3d4a8a;
+  --accent:         #5b7cf6;
+  --accent-glow:    #5b7cf640;
+  --accent-bright:  #7a96ff;
+  --text-primary:   #e8eaf6;
   --text-secondary: #8892b0;
-  --text-muted: #4a5280;
-  --gold: #f5c842;
-  --gold-glow: #f5c84220;
-  --green: #4ade80;
-  --red: #f87171;
-  --yellow: #fbbf24;
+  --text-muted:     #4a5280;
+  --gold:           #f5c842;
+  --gold-glow:      #f5c84220;
+  --green:          #4ade80;
+  --red:            #f87171;
+  --yellow:         #fbbf24;
+}
+
+/* ── Light theme ── */
+[data-theme="light"] {
+  --bg-primary:     #f0f2fa;
+  --bg-secondary:   #e4e8f5;
+  --bg-card:        #ffffff;
+  --bg-card-hover:  #f5f7ff;
+  --border:         #cdd2ea;
+  --border-bright:  #9aa5cc;
+  --accent:         #4a6cf7;
+  --accent-glow:    #4a6cf720;
+  --accent-bright:  #3356e8;
+  --text-primary:   #1a1f3c;
+  --text-secondary: #4a5280;
+  --text-muted:     #8892b0;
+  --gold:           #c48a00;
+  --gold-glow:      #c48a0020;
+  --green:          #16a34a;
+  --red:            #dc2626;
+  --yellow:         #d97706;
 }
 
 @theme inline {

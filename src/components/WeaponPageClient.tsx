@@ -60,15 +60,7 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
   const weaponFile = WEAPON_FILES[weapon];
   const weaponName = t(`names.${weapon}` as Parameters<typeof t>[0], { defaultValue: weapon });
 
-  // Guard: unknown weapon slug — render error immediately, skip data fetch
-  if (!weaponFile) {
-    return (
-      <div className="rounded-xl border p-4 text-sm" style={{ background: "var(--bg-card)", borderColor: "var(--red)", color: "var(--red)" }}>
-        ⚠️ Unknown weapon: {weapon}
-      </div>
-    );
-  }
-
+  // All hooks must be called unconditionally (Rules of Hooks)
   const columns: ColumnDef<SkillRow, unknown>[] = useMemo(() => [
     {
       accessorKey: "icon",
@@ -93,9 +85,12 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
     { accessorKey: "mp",          header: t("cols.mp") },
     { accessorKey: "hp",          header: t("cols.hp") },
     { accessorKey: "cooldown",    header: t("cols.cooldown") },
-  ], [weapon, t]);
+  ], [t]);
 
   useEffect(() => {
+    // Guard: skip fetch for unknown weapon slugs
+    if (!weaponFile) return;
+
     async function load() {
       setLoading(true);
       setError(null);
@@ -158,6 +153,15 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
     load();
   }, [weapon, weaponFile, t]);
 
+  // Guard: unknown weapon slug — rendered after all hooks
+  if (!weaponFile) {
+    return (
+      <div className="rounded-xl border p-4 text-sm" style={{ background: "var(--bg-card)", borderColor: "var(--red)", color: "var(--red)" }}>
+        ⚠️ Unknown weapon: {weapon}
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
@@ -204,9 +208,4 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
     </div>
   );
 }
-
-
-
-
-
 

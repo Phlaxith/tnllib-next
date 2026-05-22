@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,10 +8,13 @@ export const metadata: Metadata = {
   icons: { icon: "https://assets.playnccdn.com/common/tl.ico" },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // lang is set dynamically per locale by HtmlLang in [locale]/layout.tsx
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Read theme cookie server-side → no script tag needed, no flash
+  const cookieStore = await cookies();
+  const theme = (cookieStore.get("theme")?.value === "light" ? "light" : "dark") as "dark" | "light";
+
   return (
-    <html suppressHydrationWarning>
+    <html data-theme={theme} suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );

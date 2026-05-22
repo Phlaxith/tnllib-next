@@ -61,8 +61,7 @@ export default function FishingPage() {
       }
     }
     load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [t]);
 
   return (
     <div className="max-w-5xl mx-auto">

@@ -1,31 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState, useMemo } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Swords, Info, Search, ChevronDown } from "lucide-react";
-import { fetchGzJson, unrealPathToPublic } from "@/lib/utils";
+import { WEAPON_MODELS, type ModelEntry, type WeaponType } from "@/lib/models";
 
 const ItemViewer = dynamic(() => import("@/components/ItemViewer"), { ssr: false });
 
-// Mapping du type de weapon slot → slug pour le placeholder 3D et l'icône
-const SLOT_TO_TYPE: Record<string, string> = {
-  Bow:        "bow",
-  Crossbow:   "crossbow",
-  Dagger:     "dagger",
-  Gauntlet:   "gauntlet",
-  Orb:        "orb",
-  Spear:      "spear",
-  Staff:      "staff",
-  Sword:      "sword",
-  Sword2h:    "sword2h",
-  Wand:       "wand",
-  // fallback
-  TwoHand:    "sword2h",
-  OneHand:    "sword",
-};
-
-const WEAPON_ICON: Record<string, string> = {
+const WEAPON_ICON: Record<WeaponType, string> = {
   bow:      "/Image/Weapon/Bow.png",
   crossbow: "/Image/Weapon/CrossBow.png",
   dagger:   "/Image/Weapon/Dagger.png",
@@ -38,257 +20,213 @@ const WEAPON_ICON: Record<string, string> = {
   wand:     "/Image/Weapon/Hand.png",
 };
 
-const RARITY_COLOR: Record<string, string> = {
-  Normal:    "var(--text-secondary)",
-  Uncommon:  "var(--green)",
-  Rare:      "#5b7cf6",
-  Epic:      "#b44fe8",
-  Legendary: "var(--gold)",
+const CATEGORY_LABEL: Record<string, string> = { item: "Item", skin: "Skin" };
+const CATEGORY_COLOR: Record<string, string> = {
+  item: "var(--accent-bright)",
+  skin: "var(--gold)",
 };
 
-interface WeaponItem {
-  id: string;
-  name: string;
-  type: string;           // bow, sword, etc.
-  slot: string;           // raw slot name
-  rarity: string;
-  levelReq: number;
-  icon: string;
-  modelUrl?: string;
-  minAtk: number;
-  maxAtk: number;
-  weight: number;
-}
-
-// Lecture et transformation de AllWeaponItems.json.gz
-async function loadWeapons(): Promise<WeaponItem[]> {
-  const raw = await fetchGzJson("/data/AllWeaponItems.json.gz") as unknown[];
-  if (!Array.isArray(raw)) return [];
-
-  return (raw as Record<string, unknown>[])
-    .map((item) => {
-      const slot = String(item.equip_slot_type ?? item.weapon_type ?? item.slot ?? "");
-      const slotClean = slot.split("::k").pop() ?? slot;
-      const type = SLOT_TO_TYPE[slotClean] ?? "sword";
-      const rarity = String(item.item_grade ?? item.grade ?? "Normal").split("::k").pop() ?? "Normal";
-      const iconPath = String(item.icon_path ?? item.IconPath ?? "");
-
-      return {
-        id:       String(item.item_id ?? item.id ?? Math.random()),
-        name:     String(item.name ?? item.item_name ?? item.Name ?? "Unknown"),
-        type,
-        slot:     slotClean,
-        rarity,
-        levelReq: Number(item.require_level ?? item.level_limit ?? 0),
-        icon:     unrealPathToPublic(iconPath || undefined),
-        minAtk:   Number(item.min_attack ?? item.MinAtk ?? 0),
-        maxAtk:   Number(item.max_attack ?? item.MaxAtk ?? 0),
-        weight:   Number(item.weight ?? 0),
-      };
-    })
-    .filter((w) => w.name && w.name !== "Unknown");
-}
-
-const WEAPON_TYPES = ["all", "bow", "crossbow", "dagger", "gauntlet", "orb", "spear", "staff", "sword", "sword2h", "wand"];
+const ALL_TYPES: Array<"all" | WeaponType> = [
+  "all", "bow", "crossbow", "dagger", "gauntlet", "orb",
+  "spear", "staff", "sword", "sword2h", "wand",
+];
 
 export default function WeaponItemsPage() {
   const t = useTranslations("itemViewer");
-  const [weapons, setWeapons] = useState<WeaponItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<WeaponItem | null>(null);
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
 
-  useEffect(() => {
-    loadWeapons()
-      .then((data) => {
-        setWeapons(data);
-        if (data.length > 0) setSelected(data[0]);
-      })
-      .catch(() => setError(t("error")))
-      .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [selected,    setSelected]    = useState<ModelEntry | null>(WEAPON_MODELS[0] ?? null);
+  const [search,      setSearch]      = useState("");
+  const [typeFilter,  setTypeFilter]  = useState<"all" | WeaponType>("all");
+  const [catFilter,   setCatFilter]   = useState<"all" | "item" | "skin">("all");
+  const [searchFocus, setSearchFocus] = useState(false);
 
-  const filtered = useMemo(() =>
-    weapons.filter((w) => {
-      const matchType = typeFilter === "all" || w.type === typeFilter;
-      const matchSearch = !search || w.name.toLowerCase().includes(search.toLowerCase());
-      return matchType && matchSearch;
-    }),
-    [weapons, search, typeFilter]
-  );
+  const filtered = WEAPON_MODELS.filter((m) => {
+    const matchType   = typeFilter === "all" || m.type === typeFilter;
+    const matchCat    = catFilter  === "all" || m.category === catFilter;
+    const matchSearch = !search    || m.name.toLowerCase().includes(search.toLowerCase());
+    return matchType && matchCat && matchSearch;
+  });
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden"
-          style={{ background: "var(--accent-glow)", border: "1px solid var(--border-bright)" }}>
-          <img src="/Image/Weapon/Sword.png" alt="weapons" width={36} height={36} style={{ objectFit: "contain" }} />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>{t("title")}</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>{t("subtitle")}</p>
-        </div>
+    <div className="flex flex-col gap-3" style={{ height: "calc(100vh - 4rem)" }}>
+
+      {/* ── Header ── */}
+      <div className="shrink-0">
+        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+          {t("title")}
+        </h1>
+        <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
+          Éditez{" "}
+          <code className="px-1 rounded" style={{ background: "var(--bg-card)", color: "var(--accent-bright)" }}>
+            src/lib/models.ts
+          </code>
+          {" "}· GLB dans{" "}
+          <code className="px-1 rounded" style={{ background: "var(--bg-card)", color: "var(--accent-bright)" }}>
+            public/models/weapons/
+          </code>
+        </p>
       </div>
 
-      {loading && <div className="py-20 text-center text-sm animate-pulse" style={{ color: "var(--text-muted)" }}>{t("loading")}</div>}
-      {error  && <div className="rounded-xl border p-4 text-sm" style={{ background: "var(--bg-card)", borderColor: "var(--red)", color: "var(--red)" }}>⚠️ {error}</div>}
+      {WEAPON_MODELS.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 rounded-2xl border"
+          style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
+          <div className="text-4xl">📦</div>
+          <div className="text-center">
+            <div className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Aucun modèle configuré</div>
+            <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              Ouvrez <code className="px-1 rounded" style={{ background: "var(--bg-secondary)", color: "var(--accent-bright)" }}>src/lib/models.ts</code> et ajoutez vos modèles dans <code>WEAPON_MODELS</code>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ── Two-column layout: inline style to bypass Tailwind v4 arbitrary grid ── */
+        <div
+          className="flex-1 overflow-hidden"
+          style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: "1rem", minHeight: 0 }}
+        >
+          {/* ══ Left panel ══ */}
+          <div className="flex flex-col gap-2 overflow-hidden">
 
-      {!loading && !error && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-          {/* ── Left panel : filters + list ── */}
-          <div className="flex flex-col gap-3">
             {/* Search */}
-            <div className="relative">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
+            <div className="relative shrink-0">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                style={{ color: "var(--text-muted)" }}>
+                <circle cx="11" cy="11" r="8" strokeWidth="2" />
+                <path d="M21 21l-4.35-4.35" strokeWidth="2" strokeLinecap="round" />
+              </svg>
               <input
                 type="text"
-                placeholder={t("search")}
+                placeholder="Rechercher…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setSearchFocus(true)}
+                onBlur={() => setSearchFocus(false)}
                 className="w-full pl-8 pr-3 py-2 rounded-lg text-sm border outline-none"
-                style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-primary)" }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-                onBlur={(e)  => (e.currentTarget.style.borderColor = "var(--border)")}
+                style={{
+                  background:  "var(--bg-card)",
+                  borderColor: searchFocus ? "var(--accent)" : "var(--border)",
+                  color:       "var(--text-primary)",
+                }}
               />
             </div>
 
-            {/* Type filter tabs */}
-            <div className="flex flex-wrap gap-1">
-              {WEAPON_TYPES.map((wt) => (
-                <button
-                  key={wt}
-                  onClick={() => setTypeFilter(wt)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all border"
+            {/* Category filter */}
+            <div className="flex gap-1 shrink-0">
+              {(["all", "item", "skin"] as const).map((c) => (
+                <button key={c} onClick={() => setCatFilter(c)}
+                  className="flex-1 py-1 rounded-lg text-xs font-medium transition-all border"
                   style={{
-                    background: typeFilter === wt ? "var(--accent-glow)" : "var(--bg-card)",
-                    borderColor: typeFilter === wt ? "var(--accent)" : "var(--border)",
-                    color: typeFilter === wt ? "var(--accent-bright)" : "var(--text-muted)",
-                  }}
-                >
-                  {wt !== "all" && WEAPON_ICON[wt] && (
-                    <img src={WEAPON_ICON[wt]} alt={wt} width={14} height={14} style={{ objectFit: "contain" }} />
-                  )}
+                    background:  catFilter === c ? "var(--accent-glow)" : "var(--bg-card)",
+                    borderColor: catFilter === c ? "var(--accent)"      : "var(--border)",
+                    color:       catFilter === c ? "var(--accent-bright)": "var(--text-muted)",
+                  }}>
+                  {c === "all" ? "Tout" : CATEGORY_LABEL[c]}
+                </button>
+              ))}
+            </div>
+
+            {/* Type filter */}
+            <div className="flex flex-wrap gap-1 shrink-0">
+              {ALL_TYPES.map((wt) => (
+                <button key={wt} onClick={() => setTypeFilter(wt)}
+                  className="px-2 py-1 rounded-lg text-xs font-medium transition-all border"
+                  style={{
+                    background:  typeFilter === wt ? "var(--accent-glow)" : "var(--bg-card)",
+                    borderColor: typeFilter === wt ? "var(--accent)"      : "var(--border)",
+                    color:       typeFilter === wt ? "var(--accent-bright)": "var(--text-muted)",
+                  }}>
                   {wt === "all" ? t("filterAll") : wt}
                 </button>
               ))}
             </div>
 
             {/* Count */}
-            <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {filtered.length} {t("items")}
+            <div className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+              {filtered.length} / {WEAPON_MODELS.length} modèles
             </div>
 
-            {/* List */}
-            <div className="flex flex-col gap-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 320px)" }}>
-              {filtered.map((w) => (
-                <button
-                  key={w.id}
-                  onClick={() => setSelected(w)}
-                  className="w-full text-left rounded-xl px-3 py-2 border flex items-center gap-3 transition-all"
-                  style={{
-                    background: selected?.id === w.id ? "var(--bg-card-hover)" : "var(--bg-card)",
-                    borderColor: selected?.id === w.id ? "var(--border-bright)" : "var(--border)",
-                  }}
-                >
-                  {/* Icon */}
-                  <div className="w-9 h-9 rounded shrink-0 flex items-center justify-center"
-                    style={{ background: "var(--bg-secondary)" }}>
-                    {w.icon
-                      ? <img src={w.icon} alt="" width={32} height={32} loading="lazy" style={{ objectFit: "contain" }} />
-                      : <img src={WEAPON_ICON[w.type] ?? "/Image/Weapon/Sword.png"} alt="" width={28} height={28} style={{ objectFit: "contain", opacity: 0.5 }} />
-                    }
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate" style={{ color: RARITY_COLOR[w.rarity] ?? "var(--text-primary)" }}>
-                      {w.name}
+            {/* Scrollable list */}
+            <div className="flex flex-col gap-1 overflow-y-auto" style={{ flex: 1, minHeight: 0 }}>
+              {filtered.map((m) => {
+                const isSelected = selected?.id === m.id;
+                return (
+                  <button key={m.id} onClick={() => setSelected(m)}
+                    className="w-full text-left rounded-xl px-3 py-2.5 border flex items-center gap-3 transition-all"
+                    style={{
+                      background:  isSelected ? "var(--accent-glow)" : "var(--bg-card)",
+                      borderColor: isSelected ? "var(--accent)"      : "var(--border)",
+                      flexShrink:  0,
+                    }}>
+                    <div className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center"
+                      style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={WEAPON_ICON[m.type]} alt={m.type} width={26} height={26}
+                        style={{ objectFit: "contain", opacity: isSelected ? 1 : 0.65 }} />
                     </div>
-                    <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      Lv. {w.levelReq} · {w.slot}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium truncate"
+                          style={{ color: isSelected ? "var(--accent-bright)" : "var(--text-primary)" }}>
+                          {m.name}
+                        </span>
+                        <span className="text-xs px-1.5 rounded-full shrink-0 font-medium"
+                          style={{ background: `${CATEGORY_COLOR[m.category]}20`, color: CATEGORY_COLOR[m.category] }}>
+                          {CATEGORY_LABEL[m.category]}
+                        </span>
+                      </div>
+                      <div className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                        {m.type}{m.description ? ` · ${m.description}` : ""}
+                      </div>
                     </div>
-                  </div>
-                </button>
-              ))}
-
+                  </button>
+                );
+              })}
               {filtered.length === 0 && (
                 <div className="py-8 text-center text-sm" style={{ color: "var(--text-muted)" }}>{t("noResults")}</div>
               )}
             </div>
           </div>
 
-          {/* ── Right panel : viewer + stats ── */}
-          <div className="lg:col-span-2 flex flex-col gap-4">
+          {/* ══ Right panel : 3D viewer ══ */}
+          <div className="flex flex-col gap-2 overflow-hidden" style={{ minHeight: 0 }}>
             {selected ? (
               <>
-                {/* 3D Viewer */}
-                <ItemViewer modelUrl={selected.modelUrl} weaponType={selected.type} height={340} />
-
-                {/* Info card */}
-                <div className="rounded-xl border p-5" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
-                  <div className="flex items-start gap-4 mb-4">
-                    {/* Weapon icon */}
-                    <div className="w-16 h-16 rounded-xl flex items-center justify-center border shrink-0"
-                      style={{ background: "var(--bg-secondary)", borderColor: "var(--border)" }}>
-                      {selected.icon
-                        ? <img src={selected.icon} alt="" width={52} height={52} style={{ objectFit: "contain" }} />
-                        : <img src={WEAPON_ICON[selected.type] ?? "/Image/Weapon/Sword.png"} alt="" width={44} height={44} style={{ objectFit: "contain", opacity: 0.5 }} />
-                      }
-                    </div>
-                    <div className="flex-1">
-                      <h2 className="text-2xl font-bold" style={{ color: RARITY_COLOR[selected.rarity] ?? "var(--text-primary)" }}>
-                        {selected.name}
-                      </h2>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                          style={{ background: `${RARITY_COLOR[selected.rarity]}20`, color: RARITY_COLOR[selected.rarity] }}>
-                          {selected.rarity}
-                        </span>
-                        <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                          {selected.slot} · {t("levelReq")} {selected.levelReq}
-                        </span>
-                      </div>
-                    </div>
+                {/* Item name bar */}
+                <div className="shrink-0 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center"
+                    style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={WEAPON_ICON[selected.type]} alt={selected.type} width={26} height={26} style={{ objectFit: "contain" }} />
                   </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: t("minAtk"),  value: selected.minAtk.toLocaleString(), color: "var(--text-primary)" },
-                      { label: t("maxAtk"),  value: selected.maxAtk.toLocaleString(), color: "var(--red)" },
-                      { label: t("weight"),  value: selected.weight.toLocaleString(), color: "var(--text-secondary)" },
-                    ].map((s) => (
-                      <div key={s.label} className="rounded-lg p-3 border" style={{ background: "var(--bg-secondary)", borderColor: "var(--border)" }}>
-                        <div className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>{s.label}</div>
-                        <div className="font-bold" style={{ color: s.color }}>{s.value}</div>
-                      </div>
-                    ))}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-semibold text-base truncate" style={{ color: "var(--text-primary)" }}>{selected.name}</h2>
+                      <span className="text-xs px-2 py-0.5 rounded-full shrink-0 font-medium"
+                        style={{ background: `${CATEGORY_COLOR[selected.category]}20`, color: CATEGORY_COLOR[selected.category] }}>
+                        {CATEGORY_LABEL[selected.category]}
+                      </span>
+                    </div>
+                    <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      {selected.type}
+                      {selected.description && <> · {selected.description}</>}
+                      <span className="ml-2 font-mono" style={{ color: "var(--border-bright)" }}>{selected.id}.glb</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* GLB info */}
-                <div className="rounded-xl border p-4 flex items-start gap-3" style={{ background: "var(--bg-secondary)", borderColor: "var(--border)" }}>
-                  <Info size={15} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
-                  <div className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                    <strong style={{ color: "var(--accent-bright)" }}>{t("infoTitle")}</strong>{" "}
-                    {t("infoText")}{" "}
-                    <code className="px-1 rounded text-xs" style={{ background: "var(--bg-card)", color: "var(--accent-bright)" }}>
-                      public/models/weapons/{selected.id}.glb
-                    </code>{" "}
-                    {t("infoText2")}{" "}
-                    <code className="px-1 rounded text-xs" style={{ background: "var(--bg-card)", color: "var(--accent-bright)" }}>
-                      modelUrl: &quot;/models/weapons/{selected.id}.glb&quot;
-                    </code>
-                  </div>
+                {/* Full-height viewer */}
+                <div style={{ flex: 1, minHeight: 0 }}>
+                  <ItemViewer
+                    modelUrl={selected.modelPath ?? `/models/weapons/${selected.id}.glb`}
+                    weaponType={selected.type}
+                    height="100%"
+                  />
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-64" style={{ color: "var(--text-muted)" }}>
-                {t("selectItem")}
+              <div className="flex-1 flex items-center justify-center rounded-2xl border"
+                style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
+                Sélectionnez un modèle
               </div>
             )}
           </div>
@@ -297,4 +235,3 @@ export default function WeaponItemsPage() {
     </div>
   );
 }
-
