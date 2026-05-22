@@ -1,0 +1,228 @@
+{
+  "nav": {
+    "home": "Home",
+    "bestiary": "3D Bestiary",
+    "tables": "Tables",
+    "achievements": "Achievements",
+    "fishing": "Fishing",
+    "weapons": "Weapons",
+    "bow": "Bow",
+    "crossbow": "Crossbow",
+    "dagger": "Dagger",
+    "orb": "Orb",
+    "spear": "Spear",
+    "staff": "Staff",
+    "sword": "Sword & Shield",
+    "sword2h": "Greatsword",
+    "wand": "Wand",
+    "gauntlet": "Gauntlet",
+    "calculators": "Calculators",
+    "calcDamage": "Damage / Healing",
+    "calcGroupBuffs": "Group Buffs",
+    "weaponMastery": "Weapon Mastery",
+    "items3d": "3D Item Viewer",
+    "itemsWeapons": "Weapons"
+  },
+  "home": {
+    "badge": "Thrones & Liberty — Data Library",
+    "title": "TLLibrary",
+    "subtitle": "Tools, calculators and game data to help you optimize your gameplay in Thrones & Liberty.",
+    "legal": "Data extracted from Throne & Liberty (AGS/NCSoft) — for personal and community use only.",
+    "sections": {
+      "bestiary": {
+        "title": "3D Bestiary",
+        "desc": "Explore game monsters with their animated 3D models.",
+        "badge": "New"
+      },
+      "calculator": {
+        "title": "Damage Calculator",
+        "desc": "Calculate your damage, healing and DoTs in real time."
+      },
+      "weapons": {
+        "title": "Weapons & Skills",
+        "desc": "All skills sorted by weapon type."
+      },
+      "achievements": {
+        "title": "Achievements",
+        "desc": "The complete list of achievements with icons."
+      },
+      "fishing": {
+        "title": "Fishing",
+        "desc": "Fishing levels, fish and habitats."
+      }
+    }
+  },
+  "bestiary": {
+    "title": "Bestiary",
+    "subtitle": "Catalogue of Thrones & Liberty creatures. Add your Blender models exported as",
+    "subtitleSuffix": "into",
+    "creatures": "creatures",
+    "loading": "Loading…",
+    "stats": {
+      "hp": "HP",
+      "attack": "Attack",
+      "defense": "Defense"
+    },
+    "weaknesses": "Weaknesses",
+    "infoTitle": "To add a 3D model:",
+    "infoText": "export your Blender model as GLTF 2.0 (.glb) via File → Export → glTF 2.0, place it in",
+    "infoText2": "then add",
+    "infoText3": "to the list."
+  },
+  "calculator": {
+    "title": "Damage / Healing Calculator",
+    "subtitle": "Adjust parameters, results update in real time.",
+    "params": "Parameters",
+    "tabs": {
+      "damage": "Damage",
+      "dot": "DoT",
+      "heal": "Healing",
+      "hot": "HoT"
+    },
+    "formulas": "Formulas used",
+    "formula1": "• Chance = rate / (rate + 1000)",
+    "formula2": "• Heal Chance = rate / (rate + 3000)",
+    "formula3": "• Mitigation = 1 / (1 + def / 2700)",
+    "formula4": "• Base Damage = (weapon × skill%) + flat damage",
+    "sliders": {
+      "skillPer": "Skill % Damage",
+      "skillFlat": "Skill Flat Damage",
+      "minDmg": "Min Damage (weapon)",
+      "maxDmg": "Max Damage (weapon)",
+      "monsterDmg": "Monster Damage Boost %",
+      "dmgBuff1": "Damage Buff % (Skill)",
+      "dmgBuff2": "Secondary Buff %",
+      "sdb": "Skill Damage Boost",
+      "ssdb": "Species Damage Boost",
+      "bonusDmg": "Bonus Damage (flat)",
+      "defense": "Target Defense",
+      "critHit": "Critical Chance",
+      "critDamage": "Critical Damage %",
+      "heavyHit": "Heavy Hit Chance",
+      "heavyDmg": "Heavy % Bonus",
+      "curse": "Curse/Heal %"
+    },
+    "results": {
+      "critChance": "Crit Chance",
+      "heavyChance": "Heavy Chance",
+      "minDmg": "Min Damage",
+      "maxCrit": "Max Crit Damage",
+      "avgDmg": "Avg Total Damage",
+      "dotAvg": "Avg DoT",
+      "dotMaxCrit": "Max Crit DoT",
+      "dotTotal": "Avg Total DoT",
+      "healCritChance": "Heal Crit Chance",
+      "minHeal": "Min Heal",
+      "maxCritHeal": "Max Crit Heal",
+      "avgHeal": "Avg Total Heal",
+      "hotCritChance": "HoT Crit Chance",
+      "minHot": "Min HoT",
+      "maxCritHot": "Max Crit HoT",
+      "avgHot": "Avg Total HoT"
+    }
+  },
+  "fishing": {
+    "title": "Fishing",
+    "subtitle": "Fishing data extracted from the game.",
+    "levelsTitle": "Fishing Levels",
+    "fishTitle": "Fish & Habitats",
+    "searchLevels": "Search a tier…",
+    "searchFish": "Search a fish or habitat…",
+    "cols": {
+      "tier": "Tier",
+      "title": "Title",
+      "expNext": "XP required",
+      "totalExp": "Total XP",
+      "name": "Name",
+      "level": "Level",
+      "habitat": "Habitat"
+    },
+    "loading": "Loading data…",
+    "error": "Unable to load data. Copy the .gz files into public/data/"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "subtitle": "All achievements available in Thrones & Liberty.",
+    "search": "Search an achievement…",
+    "cols": {
+      "icon": "Icon",
+      "title": "Title",
+      "description": "Description",
+      "category": "Category",
+      "subcategory": "Subcategory"
+    },
+    "loading": "Loading data…",
+    "error": "Unable to load data. Copy the .gz files into public/data/"
+  },
+  "itemViewer": {
+    "title": "Weapons — 3D Viewer",
+    "subtitle": "Select a weapon to view it in 3D. Add your .glb models in public/models/weapons/.",
+    "search": "Search a weapon…",
+    "filterAll": "All",
+    "items": "items",
+    "noResults": "No results",
+    "loading": "Loading data…",
+    "error": "Unable to load data. Missing file in public/data/",
+    "levelReq": "Level required",
+    "minAtk": "Min Attack",
+    "maxAtk": "Max Attack",
+    "weight": "Weight",
+    "infoTitle": "To add a 3D model:",
+    "infoText": "export your weapon from Blender as .glb and place it in",
+    "infoText2": "then add to the list",
+    "selectItem": "Select a weapon from the list"
+  },
+  "weapons": {
+    "title": "{name} — Skills",
+    "subtitle": "Data extracted from the game.",
+    "search": "Search a skill…",
+    "loading": "Loading data…",
+    "error": "Unable to load data. Missing file in public/data/",
+    "cols": {
+      "icon": "Icon",
+      "name": "Name",
+      "internal": "Internal ID",
+      "type": "Type",
+      "delay": "Delay (s)",
+      "hitDelay": "Hit delay (s)",
+      "chargeDelay": "Max charge (s)",
+      "mp": "MP Cost",
+      "hp": "HP Cost",
+      "cooldown": "Cooldown (s)"
+    },
+    "names": {
+      "bow": "Bow",
+      "crossbow": "Crossbow",
+      "dagger": "Dagger",
+      "gauntlet": "Gauntlet",
+      "orb": "Orb",
+      "spear": "Spear",
+      "staff": "Staff",
+      "sword": "Sword & Shield",
+      "sword2h": "Greatsword",
+      "wand": "Wand"
+    }
+  },
+  "mastery": {
+    "title": "Weapon Mastery",
+    "subtitle": "Points required per mastery tier.",
+    "search": "Search a level…",
+    "cols": {
+      "level": "Level",
+      "pointsNext": "Points required",
+      "totalPoints": "Cumulative points"
+    },
+    "loading": "Loading data…",
+    "error": "Unable to load data. Missing file in public/data/"
+  },
+  "table": {
+    "search": "Search…",
+    "noResults": "No results",
+    "results": "{count} results"
+  }
+}
+
+
+
+
+

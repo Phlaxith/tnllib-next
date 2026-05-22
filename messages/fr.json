@@ -1,0 +1,228 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "bestiary": "Bestiaire 3D",
+    "tables": "Tables",
+    "achievements": "Succès",
+    "fishing": "Pêche",
+    "weapons": "Armes",
+    "bow": "Arc",
+    "crossbow": "Arbalète",
+    "dagger": "Dague",
+    "orb": "Orbe",
+    "spear": "Lance",
+    "staff": "Bâton",
+    "sword": "Épée & Bouclier",
+    "sword2h": "Grande Épée",
+    "wand": "Baguette",
+    "gauntlet": "Gantelet",
+    "calculators": "Calculateurs",
+    "calcDamage": "Dégâts / Soins",
+    "calcGroupBuffs": "Buffs de groupe",
+    "weaponMastery": "Maîtrise des Armes",
+    "items3d": "Viewer 3D Items",
+    "itemsWeapons": "Armes"
+  },
+  "home": {
+    "badge": "Thrones & Liberty — Data Library",
+    "title": "TLLibrary",
+    "subtitle": "Outils, calculateurs et données extraites du jeu pour vous aider à optimiser votre gameplay dans Thrones & Liberty.",
+    "legal": "Données extraites de Throne & Liberty (AGS/NCSoft) — usage personnel et communautaire uniquement.",
+    "sections": {
+      "bestiary": {
+        "title": "Bestiaire 3D",
+        "desc": "Explorez les monstres du jeu avec leurs modèles 3D animés.",
+        "badge": "Nouveau"
+      },
+      "calculator": {
+        "title": "Calculateur de Dégâts",
+        "desc": "Calculez vos dégâts, soins et DoTs en temps réel."
+      },
+      "weapons": {
+        "title": "Armes & Compétences",
+        "desc": "Toutes les compétences triées par type d'arme."
+      },
+      "achievements": {
+        "title": "Succès",
+        "desc": "La liste complète des succès."
+      },
+      "fishing": {
+        "title": "Pêche",
+        "desc": "Niveaux, poissons et habitats de pêche."
+      }
+    }
+  },
+  "bestiary": {
+    "title": "Bestiaire",
+    "subtitle": "Catalogue des créatures de Thrones & Liberty. Ajoutez vos modèles Blender exportés en",
+    "subtitleSuffix": "dans",
+    "creatures": "créatures",
+    "loading": "Chargement…",
+    "stats": {
+      "hp": "PV",
+      "attack": "Attaque",
+      "defense": "Défense"
+    },
+    "weaknesses": "Faiblesses",
+    "infoTitle": "Pour ajouter un modèle 3D :",
+    "infoText": "exportez votre modèle Blender en GLTF 2.0 (.glb) via Fichier → Exporter → glTF 2.0, placez-le dans",
+    "infoText2": "puis ajoutez",
+    "infoText3": "dans la liste."
+  },
+  "calculator": {
+    "title": "Calculateur Dégâts / Soins",
+    "subtitle": "Ajustez les paramètres, les résultats se mettent à jour en temps réel.",
+    "params": "Paramètres",
+    "tabs": {
+      "damage": "Dégâts",
+      "dot": "DoT",
+      "heal": "Soins",
+      "hot": "HoT"
+    },
+    "formulas": "Formules utilisées",
+    "formula1": "• Chance = rate / (rate + 1000)",
+    "formula2": "• Chance Soin = rate / (rate + 3000)",
+    "formula3": "• Mitigation = 1 / (1 + déf / 2700)",
+    "formula4": "• Dégâts Base = (arme × compétence%) + dégâts plat",
+    "sliders": {
+      "skillPer": "Compétence % Dégâts",
+      "skillFlat": "Compétence Dégâts Plat",
+      "minDmg": "Dégâts Min (arme)",
+      "maxDmg": "Dégâts Max (arme)",
+      "monsterDmg": "Boost Dégâts Monstre %",
+      "dmgBuff1": "Buff Dégâts % (Compétence)",
+      "dmgBuff2": "Buff Secondaire %",
+      "sdb": "Skill Damage Boost",
+      "ssdb": "Species Damage Boost",
+      "bonusDmg": "Bonus Dégâts (plat)",
+      "defense": "Défense cible",
+      "critHit": "Chance Critique",
+      "critDamage": "Dégâts Critique %",
+      "heavyHit": "Chance Heavy Hit",
+      "heavyDmg": "Heavy % Bonus",
+      "curse": "Curse/Heal %"
+    },
+    "results": {
+      "critChance": "Chance Critique",
+      "heavyChance": "Chance Heavy",
+      "minDmg": "Dégâts Min",
+      "maxCrit": "Dégâts Max Crit",
+      "avgDmg": "Dégâts Moy. Total",
+      "dotAvg": "DoT Moyen",
+      "dotMaxCrit": "DoT Crit Max",
+      "dotTotal": "DoT Moy. Total",
+      "healCritChance": "Chance Crit Soin",
+      "minHeal": "Soin Min",
+      "maxCritHeal": "Soin Crit Max",
+      "avgHeal": "Soin Moy. Total",
+      "hotCritChance": "Chance Crit HoT",
+      "minHot": "HoT Min",
+      "maxCritHot": "HoT Crit Max",
+      "avgHot": "HoT Moy. Total"
+    }
+  },
+  "fishing": {
+    "title": "Pêche",
+    "subtitle": "Données de pêche extraites du jeu.",
+    "levelsTitle": "Niveaux de pêche",
+    "fishTitle": "Poissons & Habitats",
+    "searchLevels": "Rechercher un palier…",
+    "searchFish": "Rechercher un poisson ou habitat…",
+    "cols": {
+      "tier": "Palier",
+      "title": "Titre",
+      "expNext": "XP requis",
+      "totalExp": "XP Total",
+      "name": "Nom",
+      "level": "Niveau",
+      "habitat": "Habitat"
+    },
+    "loading": "Chargement des données…",
+    "error": "Impossible de charger les données. Copiez les fichiers .gz dans public/data/"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "subtitle": "Tous les hauts faits disponibles dans Thrones & Liberty.",
+    "search": "Rechercher un achievement…",
+    "cols": {
+      "icon": "Icône",
+      "title": "Titre",
+      "description": "Description",
+      "category": "Catégorie",
+      "subcategory": "Sous-catégorie"
+    },
+    "loading": "Chargement des données…",
+    "error": "Impossible de charger les données. Copiez les fichiers .gz dans public/data/"
+  },
+  "itemViewer": {
+    "title": "Armes — Viewer 3D",
+    "subtitle": "Sélectionnez une arme pour la visualiser en 3D. Ajoutez vos modèles .glb dans public/models/weapons/.",
+    "search": "Rechercher une arme…",
+    "filterAll": "Tout",
+    "items": "items",
+    "noResults": "Aucun résultat",
+    "loading": "Chargement des données…",
+    "error": "Impossible de charger les données. Fichier manquant dans public/data/",
+    "levelReq": "Niveau requis",
+    "minAtk": "Attaque Min",
+    "maxAtk": "Attaque Max",
+    "weight": "Poids",
+    "infoTitle": "Pour ajouter un modèle 3D :",
+    "infoText": "exportez votre arme depuis Blender en .glb et placez-le dans",
+    "infoText2": "puis ajoutez dans la liste",
+    "selectItem": "Sélectionnez une arme dans la liste"
+  },
+  "weapons": {
+    "title": "{name} — Compétences",
+    "subtitle": "Données extraites du jeu.",
+    "search": "Rechercher une compétence…",
+    "loading": "Chargement des données…",
+    "error": "Impossible de charger les données. Fichier manquant dans public/data/",
+    "cols": {
+      "icon": "Icône",
+      "name": "Nom",
+      "internal": "ID interne",
+      "type": "Type",
+      "delay": "Délai (s)",
+      "hitDelay": "Délai impact (s)",
+      "chargeDelay": "Charge max (s)",
+      "mp": "Coût MP",
+      "hp": "Coût HP",
+      "cooldown": "Recharge (s)"
+    },
+    "names": {
+      "bow": "Arc",
+      "crossbow": "Arbalète",
+      "dagger": "Dague",
+      "gauntlet": "Gantelet",
+      "orb": "Orbe",
+      "spear": "Lance",
+      "staff": "Bâton",
+      "sword": "Épée & Bouclier",
+      "sword2h": "Grande Épée",
+      "wand": "Baguette"
+    }
+  },
+  "mastery": {
+    "title": "Maîtrise des Armes",
+    "subtitle": "Points requis par palier de maîtrise.",
+    "search": "Rechercher un niveau…",
+    "cols": {
+      "level": "Niveau",
+      "pointsNext": "Points requis",
+      "totalPoints": "Points cumulés"
+    },
+    "loading": "Chargement des données…",
+    "error": "Impossible de charger les données. Fichier manquant dans public/data/"
+  },
+  "table": {
+    "search": "Rechercher…",
+    "noResults": "Aucun résultat",
+    "results": "{count} résultats"
+  }
+}
+
+
+
+
+
