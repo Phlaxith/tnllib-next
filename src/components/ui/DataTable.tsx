@@ -56,6 +56,11 @@ export default function DataTable<T>({ data, columns, searchPlaceholder = "Reche
         />
       </div>
 
+      {/* Count */}
+      <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+        {table.getFilteredRowModel().rows.length} results
+      </div>
+
       {/* Table */}
       <div className="rounded-xl border overflow-auto" style={{ borderColor: "var(--border)" }}>
         <table>
@@ -104,7 +109,7 @@ export default function DataTable<T>({ data, columns, searchPlaceholder = "Reche
 
       {/* Count */}
       <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {table.getFilteredRowModel().rows.length} résultats
+        {table.getFilteredRowModel().rows.length} results
       </div>
     </div>
   );

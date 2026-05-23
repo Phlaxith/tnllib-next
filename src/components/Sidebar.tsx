@@ -8,14 +8,12 @@ import {
   ChevronDown, ChevronRight, Skull, Package,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useTranslations } from "next-intl";
-import LanguageSwitcher from "./LanguageSwitcher";
 import ThemeToggle from "./ThemeToggle";
 
 type NavItem = {
-  labelKey: string;
+  label: string;
   href?: string;
   icon?: React.ReactNode;
   children?: NavItem[];
@@ -23,73 +21,69 @@ type NavItem = {
 
 // Static navigation config — component references, no JSX, no runtime dependency
 type NavConfig = {
-  labelKey: string;
+  label: string;
   hrefSuffix?: string;
   Icon?: LucideIcon;
   children?: NavConfig[];
 };
 
 const NAV_CONFIG: NavConfig[] = [
-  { labelKey: "home",        hrefSuffix: "/",                    Icon: Home },
-  { labelKey: "bestiary",    hrefSuffix: "/bestiary",             Icon: Skull },
+  { label: "Home",        hrefSuffix: "/",                    Icon: Home },
+  { label: "3D Bestiary", hrefSuffix: "/bestiary",             Icon: Skull },
   {
-    labelKey: "items3d",
+    label: "3D Item Viewer",
     Icon: Package,
     children: [
-      { labelKey: "itemsWeapons", hrefSuffix: "/items/weapons" },
+      { label: "Weapons", hrefSuffix: "/items/weapons" },
     ],
   },
   {
-    labelKey: "tables",
+    label: "Tables",
     Icon: BookOpen,
     children: [
-      { labelKey: "achievements", hrefSuffix: "/achievements", Icon: Trophy },
-      { labelKey: "fishing",      hrefSuffix: "/fishing",      Icon: Fish },
+      { label: "Achievements", hrefSuffix: "/achievements", Icon: Trophy },
+      { label: "Fishing",      hrefSuffix: "/fishing",      Icon: Fish },
     ],
   },
   {
-    labelKey: "weapons",
+    label: "Weapons skills",
     Icon: Swords,
     children: [
-      { labelKey: "weaponMastery", hrefSuffix: "/weapons/mastery" },
-      { labelKey: "bow",           hrefSuffix: "/weapons/bow" },
-      { labelKey: "crossbow",      hrefSuffix: "/weapons/crossbow" },
-      { labelKey: "dagger",        hrefSuffix: "/weapons/dagger" },
-      { labelKey: "orb",           hrefSuffix: "/weapons/orb" },
-      { labelKey: "spear",         hrefSuffix: "/weapons/spear" },
-      { labelKey: "staff",         hrefSuffix: "/weapons/staff" },
-      { labelKey: "sword",         hrefSuffix: "/weapons/sword" },
-      { labelKey: "sword2h",       hrefSuffix: "/weapons/sword2h" },
-      { labelKey: "wand",          hrefSuffix: "/weapons/wand" },
-      { labelKey: "gauntlet",      hrefSuffix: "/weapons/gauntlet" },
+      { label: "Weapon Mastery",  hrefSuffix: "/weapons/mastery" },
+      { label: "Bow",             hrefSuffix: "/weapons/bow" },
+      { label: "Crossbow",        hrefSuffix: "/weapons/crossbow" },
+      { label: "Dagger",          hrefSuffix: "/weapons/dagger" },
+      { label: "Orb",             hrefSuffix: "/weapons/orb" },
+      { label: "Spear",           hrefSuffix: "/weapons/spear" },
+      { label: "Staff",           hrefSuffix: "/weapons/staff" },
+      { label: "Sword & Shield",  hrefSuffix: "/weapons/sword" },
+      { label: "Greatsword",      hrefSuffix: "/weapons/sword2h" },
+      { label: "Wand",            hrefSuffix: "/weapons/wand" },
+      { label: "Gauntlet",        hrefSuffix: "/weapons/gauntlet" },
     ],
   },
   {
-    labelKey: "calculators",
+    label: "Calculators",
     Icon: Calculator,
     children: [
-      { labelKey: "calcDamage",     hrefSuffix: "/calculator/damage" },
-      { labelKey: "calcGroupBuffs", hrefSuffix: "/calculator/group-buffs" },
+      { label: "Damage / Healing", hrefSuffix: "/calculator/damage" },
+      { label: "Group Buffs",      hrefSuffix: "/calculator/group-buffs" },
     ],
   },
 ];
 
-function buildNavItems(config: NavConfig[], base: string): NavItem[] {
+function buildNavItems(config: NavConfig[]): NavItem[] {
   return config.map((item) => ({
-    labelKey: item.labelKey,
-    href:     item.hrefSuffix !== undefined ? `${base}${item.hrefSuffix}` : undefined,
+    label:    item.label,
+    href:     item.hrefSuffix,
     icon:     item.Icon ? <item.Icon size={16} /> : undefined,
-    children: item.children ? buildNavItems(item.children, base) : undefined,
+    children: item.children ? buildNavItems(item.children) : undefined,
   }));
 }
 
-export default function Sidebar({ locale }: { locale: string }) {
-  const t = useTranslations("nav");
-  const base = `/${locale}`;
+const NAV = buildNavItems(NAV_CONFIG);
 
-  // Rebuild NAV only when the locale changes
-  const NAV = useMemo(() => buildNavItems(NAV_CONFIG, base), [base]);
-
+export default function Sidebar() {
   return (
     <aside
       className="fixed left-0 top-0 h-full w-64 flex flex-col border-r z-40"
@@ -108,7 +102,7 @@ export default function Sidebar({ locale }: { locale: string }) {
           />
           <div>
             <div className="font-bold text-base" style={{ color: "var(--text-primary)" }}>TL Library</div>
-            <div className="text-xs" style={{ color: "var(--text-muted)" }}>Thrones &amp; Liberty</div>
+            <div className="text-xs" style={{ color: "var(--text-muted)" }}>Throne &amp; Liberty</div>
           </div>
         </div>
       </div>
@@ -116,14 +110,13 @@ export default function Sidebar({ locale }: { locale: string }) {
       {/* Navigation */}
       <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
         {NAV.map((item) => (
-          <NavLink key={item.href ?? item.labelKey} item={item} t={t} />
+          <NavLink key={item.href ?? item.label} item={item} />
         ))}
       </nav>
 
       {/* Footer */}
       <div className="p-3 border-t flex flex-col gap-2" style={{ borderColor: "var(--border)" }}>
         <ThemeToggle />
-        <LanguageSwitcher currentLocale={locale} />
         <div className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
           <a href="https://ko-fi.com/" target="_blank" rel="noreferrer">☕ Ko-fi</a>
           {" · "}
@@ -134,13 +127,12 @@ export default function Sidebar({ locale }: { locale: string }) {
   );
 }
 
-function NavLink({ item, t }: { item: NavItem; t: ReturnType<typeof useTranslations<"nav">> }) {
+function NavLink({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(true);
   const isActive = item.href
     ? pathname === item.href || (item.href.endsWith("/") && pathname === item.href.slice(0, -1))
     : false;
-  const label = t(item.labelKey as Parameters<typeof t>[0]);
 
   if (item.children) {
     return (
@@ -152,13 +144,13 @@ function NavLink({ item, t }: { item: NavItem; t: ReturnType<typeof useTranslati
           style={{ color: "var(--text-secondary)" }}
         >
           <span style={{ color: "var(--accent)" }}>{item.icon}</span>
-          <span className="flex-1 text-left">{label}</span>
+          <span className="flex-1 text-left">{item.label}</span>
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         </button>
         {open && (
           <div className="ml-6 mt-1 flex flex-col gap-0.5 border-l pl-3" style={{ borderColor: "var(--border)" }}>
             {item.children.map((child) => (
-              <NavLink key={child.href ?? child.labelKey} item={child} t={t} />
+              <NavLink key={child.href ?? child.label} item={child} />
             ))}
           </div>
         )}
@@ -176,7 +168,7 @@ function NavLink({ item, t }: { item: NavItem; t: ReturnType<typeof useTranslati
       }}
     >
       {item.icon && <span style={{ color: isActive ? "var(--accent)" : "var(--text-muted)" }}>{item.icon}</span>}
-      {label}
+      {item.label}
     </Link>
   );
 }

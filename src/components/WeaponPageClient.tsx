@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import DataTable from "@/components/ui/DataTable";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -34,6 +33,12 @@ const WEAPON_ICON: Record<string, string> = {
   wand:     "/Image/Weapon/Hand.png",
 };
 
+const WEAPON_NAMES: Record<string, string> = {
+  bow: "Bow", crossbow: "Crossbow", dagger: "Dagger", gauntlet: "Gauntlet",
+  orb: "Orb", spear: "Spear", staff: "Staff", sword: "Sword & Shield",
+  sword2h: "Greatsword", wand: "Wand",
+};
+
 interface SkillRow {
   icon: string;
   name: string;
@@ -52,19 +57,17 @@ interface WeaponPageClientProps {
 }
 
 export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
-  const t = useTranslations("weapons");
   const [data, setData] = useState<SkillRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const weaponFile = WEAPON_FILES[weapon];
-  const weaponName = t(`names.${weapon}` as Parameters<typeof t>[0], { defaultValue: weapon });
+  const weaponName = WEAPON_NAMES[weapon] ?? weapon;
 
-  // All hooks must be called unconditionally (Rules of Hooks)
   const columns: ColumnDef<SkillRow, unknown>[] = useMemo(() => [
     {
       accessorKey: "icon",
-      header: t("cols.icon"),
+      header: "Icon",
       enableSorting: false,
       cell: (i) => {
         const src = i.getValue() as string;
@@ -73,19 +76,19 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
           : <div className="w-10 h-10 rounded" style={{ background: "var(--border)" }} />;
       },
     },
-    { accessorKey: "name",        header: t("cols.name") },
-    { accessorKey: "internal",    header: t("cols.internal"), cell: (i) => <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{i.getValue() as string}</span> },
-    { accessorKey: "type",        header: t("cols.type"),     cell: (i) => {
+    { accessorKey: "name",        header: "Name" },
+    { accessorKey: "internal",    header: "Internal ID", cell: (i) => <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{i.getValue() as string}</span> },
+    { accessorKey: "type",        header: "Type",        cell: (i) => {
       const v = i.getValue() as string;
       return v ? <span className="px-2 py-0.5 rounded text-xs" style={{ background: "var(--accent-glow)", color: "var(--accent-bright)" }}>{v}</span> : null;
     }},
-    { accessorKey: "delay",       header: t("cols.delay") },
-    { accessorKey: "hitDelay",    header: t("cols.hitDelay") },
-    { accessorKey: "chargeDelay", header: t("cols.chargeDelay") },
-    { accessorKey: "mp",          header: t("cols.mp") },
-    { accessorKey: "hp",          header: t("cols.hp") },
-    { accessorKey: "cooldown",    header: t("cols.cooldown") },
-  ], [t]);
+    { accessorKey: "delay",       header: "Delay (s)" },
+    { accessorKey: "hitDelay",    header: "Hit delay (s)" },
+    { accessorKey: "chargeDelay", header: "Max charge (s)" },
+    { accessorKey: "mp",          header: "MP Cost" },
+    { accessorKey: "hp",          header: "HP Cost" },
+    { accessorKey: "cooldown",    header: "Cooldown (s)" },
+  ], []);
 
   useEffect(() => {
     // Guard: skip fetch for unknown weapon slugs
@@ -144,14 +147,14 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
         setData(rows);
       } catch (e) {
         console.error(e);
-        setError(t("error"));
+        setError("Unable to load data. Missing file in public/data/");
       } finally {
         setLoading(false);
       }
     }
 
     load();
-  }, [weapon, weaponFile, t]);
+  }, [weapon, weaponFile]);
 
   // Guard: unknown weapon slug — rendered after all hooks
   if (!weaponFile) {
@@ -179,15 +182,12 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
           <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
             {weaponName}
           </h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>
-            {t("subtitle")}
-          </p>
         </div>
       </div>
 
       {loading && (
         <div className="py-20 text-center text-sm animate-pulse" style={{ color: "var(--text-muted)" }}>
-          {t("loading")}
+          Loading data…
         </div>
       )}
 
@@ -200,9 +200,9 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
       {!loading && !error && (
         <>
           <div className="mb-3 text-sm" style={{ color: "var(--text-muted)" }}>
-            {t("skillCount", { count: data.length })}
+            {data.length} skill{data.length > 1 ? "s" : ""}
           </div>
-          <DataTable data={data} columns={columns} searchPlaceholder={t("search")} />
+          <DataTable data={data} columns={columns} searchPlaceholder="Search a skill…" />
         </>
       )}
     </div>

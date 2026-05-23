@@ -27,7 +27,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      title={theme === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+      title={theme === "dark" ? "switch to light theme" : "switch to dark theme"}
       className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-all"
       style={{
         background: "var(--accent-glow)",
@@ -36,8 +36,8 @@ export default function ThemeToggle() {
       }}
     >
       {theme === "dark"
-        ? <><Sun size={13} /> Thème clair</>
-        : <><Moon size={13} /> Thème sombre</>
+        ? <><Sun size={13} /> Light Theme </>
+        : <><Moon size={13} /> Dark Theme</>
       }
     </button>
   );

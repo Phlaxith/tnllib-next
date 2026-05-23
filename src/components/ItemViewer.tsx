@@ -196,16 +196,16 @@ export default function ItemViewer({
 
   const loadingFallback = (
     <Html center>
-      <div className="text-xs animate-pulse" style={{ color: "var(--text-secondary)" }}>Chargement…</div>
+      <div className="text-xs animate-pulse" style={{ color: "var(--text-secondary)" }}>Loading…</div>
     </Html>
   );
 
   const errorFallback = (
     <Html center>
       <div className="text-xs text-center px-4" style={{ color: "var(--red)" }}>
-        ⚠️ Impossible de charger le modèle.<br />
+        ⚠️ Failed to load model.<br />
         <span style={{ color: "var(--text-muted)", fontSize: "0.65rem" }}>
-          Vérifiez que le fichier .glb est valide.
+          Check that the .glb file is valid.
         </span>
       </div>
     </Html>
@@ -235,7 +235,7 @@ export default function ItemViewer({
             color:       "var(--text-secondary)",
             backdropFilter: "blur(8px)",
           }}
-          title="Changer l'environnement"
+          title="Change environment"
         >
           <span>{currentPreset.icon}</span>
           <span>{currentPreset.label}</span>

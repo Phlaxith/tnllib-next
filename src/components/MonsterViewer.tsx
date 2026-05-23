@@ -7,7 +7,89 @@ import {
   Environment, ContactShadows, Html, Stage,
 } from "@react-three/drei";
 import * as THREE from "three";
-import { Play, GitBranch, Gauge, ChevronDown, RotateCcw } from "lucide-react";
+import { Play, GitBranch, Gauge, ChevronDown, RotateCcw, HelpCircle, Mouse, MoveHorizontal } from "lucide-react";
+
+// ─── Camera help tooltip ───────────────────────────────────────────────────────
+function CameraHelpButton() {
+  const [visible, setVisible] = useState(false);
+
+  const controls: { icon: React.ReactNode; label: string; desc: string }[] = [
+    {
+      icon: <Mouse size={13} />,
+      label: "LMB",
+      desc: "Orbit",
+    },
+    {
+      icon: <Mouse size={13} />,
+      label: "RMB",
+      desc: "Pan",
+    },
+    {
+      icon: <MoveHorizontal size={13} />,
+      label: "Scroll",
+      desc: "Zoom in / out",
+    },
+  ];
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+    >
+      <button style={{ ...overlayBtn(), padding: "5px 7px" }} title="Camera controls">
+        <HelpCircle size={13} />
+      </button>
+
+      {visible && (
+        <div
+          className="absolute z-50 rounded-xl p-3 flex flex-col gap-2"
+          style={{
+            top: "calc(100% + 6px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(10,13,26,0.95)",
+            border: "1px solid var(--border)",
+            backdropFilter: "blur(14px)",
+            minWidth: "190px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+          }}
+        >
+          <div className="text-xs font-semibold mb-1" style={{ color: "var(--accent-bright)" }}>
+            Camera controls
+          </div>
+          {controls.map((c) => (
+            <div key={c.label} className="flex items-center gap-2.5">
+              <span
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-mono font-bold shrink-0"
+                style={{
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  color: "var(--accent-bright)",
+                  minWidth: "52px",
+                  justifyContent: "center",
+                }}
+              >
+                {c.icon} {c.label}
+              </span>
+              <span className="text-xs" style={{ color: "var(--text-secondary)" }}>{c.desc}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Force environment intensity on the Three.js scene ───────────────────────
+function EnvIntensity({ value }: { value: number }) {
+  const { scene } = useThree();
+  useEffect(() => {
+    const s = scene as THREE.Scene & { environmentIntensity?: number };
+    s.environmentIntensity = value;
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
 
 // ─── Error boundary ───────────────────────────────────────────────────────────
 class GLBErrorBoundary extends React.Component<
@@ -43,6 +125,111 @@ function MonsterModel({
   const { actions, names, mixer } = useAnimations(animations, group);
   const { scene: threeScene } = useThree();
   const prevNameRef = useRef<string | null>(null);
+
+  // Debug: log material info to console to diagnose texture loading issues
+  useEffect(() => {
+    console.group(`[MonsterViewer] Scene: ${url}`);
+    scene.traverse((obj) => {
+      if (!(obj instanceof THREE.Mesh) && !(obj instanceof THREE.SkinnedMesh)) return;
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      mats.forEach((mat) => {
+        if (!(mat instanceof THREE.MeshStandardMaterial)) return;
+
+        // Sample the first pixel of the base color map to see actual colors
+        let mapPixel = "n/a";
+        if (mat.map?.image) {
+          try {
+            const c = document.createElement("canvas");
+            c.width = c.height = 1;
+            c.getContext("2d")!.drawImage(mat.map.image as CanvasImageSource, 0, 0, 1, 1);
+            const [r, g, b, a] = c.getContext("2d")!.getImageData(0, 0, 1, 1).data;
+            mapPixel = `rgba(${r},${g},${b},${a})`;
+          } catch { mapPixel = "cross-origin blocked"; }
+        }
+
+        console.log(`Mesh: ${obj.name} | Mat: ${mat.name}`, {
+          color:           "#" + mat.color.getHexString(),
+          metalness:       mat.metalness,
+          roughness:       mat.roughness,
+          emissive:        "#" + mat.emissive.getHexString(),
+          emissiveIntensity: mat.emissiveIntensity,
+          map:             mat.map ? `✅ ${(mat.map.image as HTMLImageElement)?.width}×${(mat.map.image as HTMLImageElement)?.height} colorSpace:${mat.map.colorSpace}` : "❌ null",
+          mapPixel,
+          mapSameAsORM:    mat.map && mat.metalnessMap ? (mat.map.source === mat.metalnessMap.source ? "⚠️ YES — ORM used as base color!" : "✅ different textures") : "n/a",
+          metalnessMap:    mat.metalnessMap ? "✅" : "❌ null",
+          roughnessMap:    mat.roughnessMap ? "✅" : "❌ null",
+          normalMap:       mat.normalMap    ? "✅" : "❌ null",
+          aoMap:           mat.aoMap        ? "✅" : "❌ null",
+          emissiveMap:     mat.emissiveMap  ? "✅" : "❌ null",
+          transparent:     mat.transparent,
+          opacity:         mat.opacity,
+        });
+      });
+    });
+    console.groupEnd();
+  }, [scene, url]);
+
+  // Universal fix for UE5 character exports:
+  // 1. frustumCulled=false → animated bones don't incorrectly cull meshes
+  // 2. Opaque     (transparent:false)           → depthWrite=true,  renderOrder=0
+  // 3. Cutout     (alphaTest>0)                 → depthWrite=true,  DoubleSide, renderOrder=1
+  // 4. Alpha-blend (transparent:true, alphaTest=0) → depthWrite=false, DoubleSide, renderOrder=2
+  // 5. Fix broken ORM: if metalness/roughness stuck at 1 without texture maps, use sane defaults
+  useEffect(() => {
+    // Disable frustum culling on every object in the hierarchy —
+    // skinned mesh bounding boxes are computed from bind pose and become
+    // wrong once the animation moves bones away from rest position.
+    scene.traverse((obj) => {
+      obj.frustumCulled = false;
+
+      // Also set geometry bounding sphere to Infinity so Three.js never
+      // auto-culls even if frustumCulled is reset by Stage/Bounds internally.
+      if ((obj instanceof THREE.Mesh || obj instanceof THREE.SkinnedMesh) && obj.geometry) {
+        if (!obj.geometry.boundingSphere) obj.geometry.computeBoundingSphere();
+        obj.geometry.boundingSphere!.radius = Infinity;
+      }
+
+      if (!(obj instanceof THREE.Mesh) && !(obj instanceof THREE.SkinnedMesh)) return;
+
+      const materials: THREE.Material[] = Array.isArray(obj.material) ? obj.material : [obj.material];
+
+      materials.forEach((mat) => {
+        if (!(mat instanceof THREE.MeshStandardMaterial)) return;
+
+        if (mat.alphaTest > 0) {
+          // Already cutout (hair, lace, feathers) — keep alphaTest, force opaque mode
+          mat.transparent = false;
+          mat.depthWrite  = true;
+          mat.side        = THREE.DoubleSide;
+        } else if (mat.transparent) {
+          // Convert alpha-blend → alpha-cutout to avoid sorting/depth issues
+          mat.transparent = false;
+          mat.alphaTest   = 0.1;
+          mat.depthWrite  = true;
+          mat.side        = THREE.DoubleSide;
+        } else {
+          // Fully opaque
+          mat.transparent = false;
+          mat.depthWrite  = true;
+          mat.side        = THREE.FrontSide;
+        }
+        obj.renderOrder = 0;
+
+        // Fix ORM values stuck at 1 when no texture map is present
+        if (!mat.metalnessMap && mat.metalness >= 1) mat.metalness = 0.7;
+        if (!mat.roughnessMap && mat.roughness >= 1) mat.roughness = 0.55;
+
+        // Clamp emissive intensity (KHR_materials_emissive_strength)
+        if (mat.emissiveIntensity > 1) mat.emissiveIntensity = 1;
+
+        // Ensure base color map uses sRGB color space
+        if (mat.map) mat.map.colorSpace = THREE.SRGBColorSpace;
+        if (mat.emissiveMap) mat.emissiveMap.colorSpace = THREE.SRGBColorSpace;
+
+        mat.needsUpdate = true;
+      });
+    });
+  }, [scene]);
 
   // Report available animations once loaded
   useEffect(() => {
@@ -278,7 +465,7 @@ export default function MonsterViewer({
 
   const loadingFallback = (
     <Html center>
-      <div className="text-xs animate-pulse" style={{ color: "var(--text-secondary)" }}>Chargement…</div>
+      <div className="text-xs animate-pulse" style={{ color: "var(--text-secondary)" }}>Loading…</div>
     </Html>
   );
   const errorFallback = (
@@ -299,27 +486,23 @@ export default function MonsterViewer({
         transition:  "background 0.5s ease",
       }}
     >
-      {/* ── Top-left: skeleton + anim panel + camera reset ── */}
+      {/* ── Top-left: skeleton + camera reset + help ── */}
       <div className="absolute top-2 left-2 z-10 flex gap-1 flex-wrap" style={{ maxWidth: "calc(100% - 160px)" }}>
         {hasModel && (
-          <button onClick={() => dispatchAnim({ type: "skeleton" })} style={overlayBtn(anim.showSkeleton)} title="Afficher / masquer le squelette">
-            <GitBranch size={13} /> Squelette
+          <button onClick={() => dispatchAnim({ type: "skeleton" })} style={overlayBtn(anim.showSkeleton)} title="Toggle skeleton">
+            <GitBranch size={13} /> Skeleton
           </button>
         )}
-        {hasModel && hasAnims && (
-          <button onClick={() => dispatchAnim({ type: "panel" })} style={overlayBtn(anim.showPanel)} title="Panneau d'animations">
-            <Play size={13} />
-            {anim.animations.length} anim{anim.animations.length > 1 ? "s" : ""}
-          </button>
-        )}
-        <button onClick={() => setCameraResetTick((n) => n + 1)} style={overlayBtn()} title="Réinitialiser la caméra">
+
+        <button onClick={() => setCameraResetTick((n) => n + 1)} style={overlayBtn()} title="Reset camera">
           <RotateCcw size={13} />
         </button>
+        <CameraHelpButton />
       </div>
 
       {/* ── Top-right: env picker ── */}
       <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
-        <button onClick={() => setShowEnvPicker((v) => !v)} style={overlayBtn()} title="Changer l'environnement">
+        <button onClick={() => setShowEnvPicker((v) => !v)} style={overlayBtn()} title="Change environment">
           <span>{currentPreset.icon}</span>
           <span>{currentPreset.label}</span>
           <span style={{ opacity: 0.5, fontSize: "0.6rem" }}>{showEnvPicker ? "▲" : "▼"}</span>
@@ -346,18 +529,20 @@ export default function MonsterViewer({
       <Canvas
         camera={{ position: [0, 1.5, 4], fov: 45 }}
         shadows
-        gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
+        gl={{ antialias: true, alpha: true, logarithmicDepthBuffer: true, toneMapping: THREE.NeutralToneMapping, toneMappingExposure: 1.0 }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={1.0} />
-        <directionalLight position={[5, 10, 5]}  intensity={2.0} castShadow />
-        <directionalLight position={[-4, 3, -3]} intensity={0.8} color="#eef2ff" />
+        {/* Force env intensity — Stage overrides scene prop so we need this component */}
+        <EnvIntensity value={0.15} />
+        <ambientLight intensity={0.4} />
+        <directionalLight position={[5, 8, 5]} intensity={1.5} color="#fff8f0" castShadow />
+        <directionalLight position={[-4, 3, -3]} intensity={0.4} color="#f0f4ff" />
 
         <Suspense fallback={loadingFallback}>
           {hasModel ? (
             <GLBErrorBoundary key={modelUrl} fallback={errorFallback}>
               <Stage
-                intensity={0.5}
+                intensity={0.3}
                 environment={env}
                 adjustCamera={1.2}
                 shadows={false}
@@ -373,11 +558,11 @@ export default function MonsterViewer({
               {/* Shadow fixe à Y=0 (pieds des modèles de jeu) —
                   indépendant de Stage pour ne pas bouger avec l'animation */}
               <ContactShadows
-                position={[0, 0, 0]}
-                opacity={0.45}
-                scale={6}
-                blur={2.5}
-                far={0.8}
+                position={[0, -0.01, 0]}
+                opacity={0.5}
+                scale={10}
+                blur={3}
+                far={6}
               />
             </GLBErrorBoundary>
           ) : (
@@ -410,10 +595,10 @@ export default function MonsterViewer({
                 {animSpeed.toFixed(2)}×
               </span>
               <button onClick={() => setAnimSpeed(1)} className="text-xs px-1.5 py-0.5 rounded"
-                style={{ background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border)" }} title="Reset vitesse">
+                style={{ background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border)" }} title="Reset speed">
                 ↺
               </button>
-              <button onClick={() => dispatchAnim({ type: "closePanel" })} style={{ color: "var(--text-muted)", lineHeight: 1 }} title="Fermer">
+              <button onClick={() => dispatchAnim({ type: "closePanel" })} style={{ color: "var(--text-muted)", lineHeight: 1 }} title="Close">
                 <ChevronDown size={14} />
               </button>
             </div>
@@ -441,15 +626,25 @@ export default function MonsterViewer({
         </div>
       )}
 
-      {/* ── Current animation badge (panel closed) ── */}
-      {hasModel && hasAnims && !anim.showPanel && anim.currentAnim && (
-        <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 px-2 py-1 rounded-lg text-xs"
-          style={{ background: "rgba(10,13,26,0.7)", border: "1px solid var(--border)", color: "var(--text-muted)", backdropFilter: "blur(6px)" }}>
-          <Play size={9} style={{ color: "var(--accent)" }} />
-          <span style={{ maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {anim.currentAnim}
-          </span>
-        </div>
+      {/* ── Bottom-left: anim toggle + current anim badge ── */}
+      {!anim.showPanel && (
+        <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1">
+        {hasModel && hasAnims && (
+          <button onClick={() => dispatchAnim({ type: "panel" })} style={overlayBtn(anim.showPanel)} title="Animations panel">
+            <Play size={13} />
+            {anim.animations.length} anim{anim.animations.length > 1 ? "s" : ""}
+          </button>
+        )}
+        {hasModel && hasAnims && !anim.showPanel && anim.currentAnim && (
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs"
+            style={{ background: "rgba(10,13,26,0.7)", border: "1px solid var(--border)", color: "var(--text-muted)", backdropFilter: "blur(6px)" }}>
+            <Play size={9} style={{ color: "var(--accent)" }} />
+            <span style={{ maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {anim.currentAnim}
+            </span>
+          </div>
+        )}
+      </div>
       )}
     </div>
   );
