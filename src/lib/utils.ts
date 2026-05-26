@@ -5,13 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 /** Unreal Engine asset path → local public path */
 export function unrealPathToPublic(assetPath: string | undefined): string {
   if (!assetPath) return "";
-  return `${assetPath.split(".")[0].replace("/Game", "")}.png`;
+  return `${BASE_PATH}${assetPath.split(".")[0].replace("/Game", "")}.png`;
 }
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+/** Prefix a local path with the basePath (no-op for absolute URLs) */
+export function prefixPath(path: string): string {
+  return path.startsWith("http") ? path : `${BASE_PATH}${path}`;
+}
 
 /** Decompress a gzipped JSON file fetched from /data/ */
 export async function fetchGzJson(url: string): Promise<unknown> {

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { WEAPON_MODELS, type ModelEntry, type WeaponType } from "@/lib/models";
+import { prefixPath } from "@/lib/utils";
 
 const ItemViewer = dynamic(() => import("@/components/ItemViewer"), { ssr: false });
 
@@ -211,7 +212,7 @@ export default function WeaponItemsPage() {
 
                 <div style={{ flex: 1, minHeight: 0 }}>
                   <ItemViewer
-                    modelUrl={selected.modelPath ?? `/models/weapons/${selected.id}.glb`}
+                    modelUrl={prefixPath(selected.modelPath ?? `/models/weapons/${selected.id}.glb`)}
                     weaponType={selected.type}
                     height="100%"
                   />

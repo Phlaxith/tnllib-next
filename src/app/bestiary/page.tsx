@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { MONSTER_MODELS, type MonsterEntry, type MonsterCategory } from "@/lib/models";
+import { prefixPath } from "@/lib/utils";
 
 const MonsterViewer = dynamic(() => import("@/components/MonsterViewer"), { ssr: false });
 
@@ -202,7 +203,7 @@ export default function BestiaryPage() {
 
                 <div style={{ flex: 1, minHeight: 0 }}>
                   <MonsterViewer
-                    modelUrl={selected.modelPath ?? `/models/monsters/${selected.id}.glb`}
+                    modelUrl={prefixPath(selected.modelPath ?? `/models/monsters/${selected.id}.glb`)}
                     animationName={selected.animationName}
                     height="100%"
                   />
