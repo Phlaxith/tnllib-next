@@ -102,7 +102,7 @@ export default function DataTable<T>({ data, columns, searchPlaceholder = "Reche
         </table>
         {table.getRowModel().rows.length === 0 && (
           <div className="py-12 text-center text-sm" style={{ color: "var(--text-muted)" }}>
-            Aucun résultat
+            No result
           </div>
         )}
       </div>

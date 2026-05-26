@@ -7,18 +7,20 @@ import { prefixPath } from "@/lib/utils";
 
 const ItemViewer = dynamic(() => import("@/components/ItemViewer"), { ssr: false });
 
-const WEAPON_ICON: Record<WeaponType, string> = {
-  bow:      "/Image/Weapon/Bow.png",
-  crossbow: "/Image/Weapon/CrossBow.png",
-  dagger:   "/Image/Weapon/Dagger.png",
-  gauntlet: "/Image/Weapon/Gauntlet.png",
-  orb:      "/Image/Weapon/Orb.png",
-  spear:    "/Image/Weapon/Spear.png",
-  staff:    "/Image/Weapon/Staff.png",
-  sword:    "/Image/Weapon/Sword.png",
-  sword2h:  "/Image/Weapon/Sword2h.png",
-  wand:     "/Image/Weapon/Hand.png",
-};
+const WEAPON_ICON: Record<WeaponType, string> = Object.fromEntries(
+  (Object.entries({
+    bow:      "/Image/Weapon/Bow.png",
+    crossbow: "/Image/Weapon/CrossBow.png",
+    dagger:   "/Image/Weapon/Dagger.png",
+    gauntlet: "/Image/Weapon/Gauntlet.png",
+    orb:      "/Image/Weapon/Orb.png",
+    spear:    "/Image/Weapon/Spear.png",
+    staff:    "/Image/Weapon/Staff.png",
+    sword:    "/Image/Weapon/Sword.png",
+    sword2h:  "/Image/Weapon/Sword2h.png",
+    wand:     "/Image/Weapon/Hand.png",
+  }) as [WeaponType, string][]).map(([k, v]) => [k, prefixPath(v)])
+) as Record<WeaponType, string>;
 
 const CATEGORY_LABEL: Record<string, string> = { item: "Item", skin: "Skin" };
 const CATEGORY_COLOR: Record<string, string> = {
