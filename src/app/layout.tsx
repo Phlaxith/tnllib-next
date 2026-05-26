@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import ThemeInitScript from "@/components/ThemeInitScript";
 
 export const metadata: Metadata = {
   title: "TL Library",
@@ -9,13 +9,12 @@ export const metadata: Metadata = {
   icons: { icon: "https://assets.playnccdn.com/common/tl.ico" },
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Read theme cookie server-side → no script tag needed, no flash
-  const cookieStore = await cookies();
-  const theme = (cookieStore.get("theme")?.value === "light" ? "light" : "dark") as "dark" | "light";
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme={theme} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <ThemeInitScript />
+      </head>
       <body>
         <div className="flex h-screen overflow-hidden">
           <Sidebar />
