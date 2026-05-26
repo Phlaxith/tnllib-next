@@ -68,7 +68,7 @@ export default function AchievementsPage() {
     async function load() {
       try {
         const [manifest, catRaw] = await Promise.all([
-          fetch("/data/versions/manifest.json").then((r) => r.json()) as Promise<VersionEntry[]>,
+          fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/data/versions/manifest.json`).then((r) => r.json()) as Promise<VersionEntry[]>,
           fetchGzJson("/data/TLAchievementCategory.gz"),
         ]);
         const realVersions = (manifest as VersionEntry[]).filter((v) => v.id !== "all");
