@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "serve out",
-    "lint": "eslint"
+    "lint": "eslint",
+    "glb:compress": "node scripts/compress-glb.mjs",
+    "glb:compress:inplace": "node scripts/compress-glb.mjs --in-place"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -22,6 +24,7 @@
     "three": "^0.184.0"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.1.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

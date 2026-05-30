@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home, Swords, Fish, Trophy, Calculator, BookOpen,
-  ChevronDown, ChevronRight, Skull, Package,
+  ChevronDown, ChevronRight, Skull, Package, ScrollText,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -35,6 +35,13 @@ const NAV_CONFIG: NavConfig[] = [
     Icon: Package,
     children: [
       { label: "Weapons", hrefSuffix: "/items/weapons" },
+    ],
+  },
+  {
+    label: "Articles",
+    Icon: ScrollText,
+    children: [
+      { label: "Loot Distribution", hrefSuffix: "/articles/loot-distribution" },
     ],
   },
   {
@@ -68,6 +75,7 @@ const NAV_CONFIG: NavConfig[] = [
     children: [
       { label: "Damage / Healing", hrefSuffix: "/calculator/damage" },
       { label: "Group Buffs",      hrefSuffix: "/calculator/group-buffs" },
+      { label: "Stats",            hrefSuffix: "/calculator/stats" },
     ],
   },
 ];
@@ -118,7 +126,7 @@ export default function Sidebar() {
       <div className="p-3 border-t flex flex-col gap-2" style={{ borderColor: "var(--border)" }}>
         <ThemeToggle />
         <div className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-          <a href="https://ko-fi.com/" target="_blank" rel="noreferrer">☕ Ko-fi</a>
+          <a href="https://ko-fi.com/phlaxith" target="_blank" rel="noreferrer">☕ Ko-fi</a>
           {" · "}
           <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">cc-by-sa-4.0</a>
         </div>

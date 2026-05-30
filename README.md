@@ -20,6 +20,35 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## GLB Compression
+
+This project includes a local script to optimize `.glb` files using `@gltf-transform/cli`.
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create optimized copies (`*.opt.glb`) in `public/models`:
+
+```bash
+npm run glb:compress
+```
+
+3. Replace original files only when optimized output is smaller:
+
+```bash
+npm run glb:compress:inplace
+```
+
+Optional flags:
+
+```bash
+node scripts/compress-glb.mjs --dir public/models/weapons
+node scripts/compress-glb.mjs --skip-textures
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

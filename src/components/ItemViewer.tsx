@@ -275,7 +275,7 @@ export default function ItemViewer({
       {/* ── Three.js Canvas ── */}
       <Canvas
         camera={{ position: [0, 0.5, 3.5], fov: 40 }}
-        shadows
+        shadows={{ type: THREE.PCFShadowMap }}
         gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.4 }}
         style={{ background: "transparent" }}
       >

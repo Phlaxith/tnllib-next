@@ -66,9 +66,9 @@ export const MONSTER_MODELS: MonsterEntry[] = [
   // ── Add your monsters here ──────────────────────────────────────────────
   {
     id:          "M_HarshCrow_Kimon",
-    name:        "Kimon",
+    name:        "Fellinex",
     category:    "boss",
-    description: "Kimon",
+    description: "Pet Golem",
     modelPath:   "/models/monsters/M_HarshCrow_Kimon.glb",
   },
 ];

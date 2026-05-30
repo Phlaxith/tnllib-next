@@ -1,7 +1,7 @@
 "use client";
 
 import React, { type ReactNode, useState, useEffect, useRef, useCallback, Suspense, useReducer } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import {
   OrbitControls, useGLTF, useAnimations,
   Environment, ContactShadows, Html, Stage,
@@ -37,17 +37,33 @@ function CameraHelpButton() {
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
     >
-      <button style={{ ...overlayBtn(), padding: "5px 7px" }} title="Camera controls">
-        <HelpCircle size={13} />
+      <button
+        style={{
+          width: "36px",
+          height: "36px",
+          padding: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "9999px",
+          cursor: "pointer",
+          border: "1px solid var(--accent-bright)",
+          background: "linear-gradient(135deg, var(--accent), var(--accent-bright))",
+          color: "#ffffff",
+          boxShadow: "0 0 0 2px var(--accent-glow)",
+          transition: "all 0.15s",
+        }}
+        title="Camera controls"
+      >
+        <HelpCircle size={17} />
       </button>
 
       {visible && (
         <div
           className="absolute z-50 rounded-xl p-3 flex flex-col gap-2"
           style={{
-            top: "calc(100% + 6px)",
-            left: "50%",
-            transform: "translateX(-50%)",
+            top: "calc(100% + 8px)",
+            right: 0,
             background: "rgba(10,13,26,0.95)",
             border: "1px solid var(--border)",
             backdropFilter: "blur(14px)",
@@ -81,16 +97,6 @@ function CameraHelpButton() {
   );
 }
 
-// ─── Force environment intensity on the Three.js scene ───────────────────────
-function EnvIntensity({ value }: { value: number }) {
-  const { scene } = useThree();
-  useEffect(() => {
-    const s = scene as THREE.Scene & { environmentIntensity?: number };
-    s.environmentIntensity = value;
-  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
-  return null;
-}
-
 // ─── Error boundary ───────────────────────────────────────────────────────────
 class GLBErrorBoundary extends React.Component<
   { children: ReactNode; fallback: ReactNode },
@@ -104,6 +110,19 @@ class GLBErrorBoundary extends React.Component<
   render() {
     return this.state.hasError ? this.props.fallback : this.props.children;
   }
+}
+
+// ─── Measures the real world-space floor Y after Stage has centred the model ──
+function FloorDetector({ onFloorY }: { onFloorY: (y: number) => void }) {
+  const { scene } = useThree();
+  const measured  = useRef(false);
+  useFrame(() => {
+    if (measured.current) return;
+    measured.current = true;
+    const box = new THREE.Box3().setFromObject(scene);
+    if (isFinite(box.min.y)) onFloorY(box.min.y);
+  });
+  return null;
 }
 
 // ─── GLB model with full animation + skeleton support ─────────────────────────
@@ -181,13 +200,6 @@ function MonsterModel({
     // wrong once the animation moves bones away from rest position.
     scene.traverse((obj) => {
       obj.frustumCulled = false;
-
-      // Also set geometry bounding sphere to Infinity so Three.js never
-      // auto-culls even if frustumCulled is reset by Stage/Bounds internally.
-      if ((obj instanceof THREE.Mesh || obj instanceof THREE.SkinnedMesh) && obj.geometry) {
-        if (!obj.geometry.boundingSphere) obj.geometry.computeBoundingSphere();
-        obj.geometry.boundingSphere!.radius = Infinity;
-      }
 
       if (!(obj instanceof THREE.Mesh) && !(obj instanceof THREE.SkinnedMesh)) return;
 
@@ -446,6 +458,10 @@ export default function MonsterViewer({
   // ── Speed (independent, not reset on monster change)
   const [animSpeed, setAnimSpeed] = useState(1);
 
+  // ── Floor Y for shadow positioning
+  const [floorY, setFloorY] = useState<number>(-0.01);
+  const handleFloorY = useCallback((y: number) => setFloorY(y), []);
+
   // ── Camera reset tick
   const [cameraResetTick, setCameraResetTick] = useState(0);
 
@@ -497,16 +513,18 @@ export default function MonsterViewer({
         <button onClick={() => setCameraResetTick((n) => n + 1)} style={overlayBtn()} title="Reset camera">
           <RotateCcw size={13} />
         </button>
-        <CameraHelpButton />
       </div>
 
       {/* ── Top-right: env picker ── */}
       <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
-        <button onClick={() => setShowEnvPicker((v) => !v)} style={overlayBtn()} title="Change environment">
-          <span>{currentPreset.icon}</span>
-          <span>{currentPreset.label}</span>
-          <span style={{ opacity: 0.5, fontSize: "0.6rem" }}>{showEnvPicker ? "▲" : "▼"}</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setShowEnvPicker((v) => !v)} style={overlayBtn()} title="Change environment">
+            <span>{currentPreset.icon}</span>
+            <span>{currentPreset.label}</span>
+            <span style={{ opacity: 0.5, fontSize: "0.6rem" }}>{showEnvPicker ? "▲" : "▼"}</span>
+          </button>
+          <CameraHelpButton />
+        </div>
         {showEnvPicker && (
           <div className="flex flex-col gap-0.5 rounded-xl p-1.5"
             style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)", backdropFilter: "blur(12px)", minWidth: "130px" }}>
@@ -528,12 +546,10 @@ export default function MonsterViewer({
       {/* ── Three.js Canvas ── */}
       <Canvas
         camera={{ position: [0, 1.5, 4], fov: 45 }}
-        shadows
+        shadows={{ type: THREE.PCFShadowMap }}
         gl={{ antialias: true, alpha: true, logarithmicDepthBuffer: true, toneMapping: THREE.NeutralToneMapping, toneMappingExposure: 1.0 }}
         style={{ background: "transparent" }}
       >
-        {/* Force env intensity — Stage overrides scene prop so we need this component */}
-        <EnvIntensity value={0.15} />
         <ambientLight intensity={0.4} />
         <directionalLight position={[5, 8, 5]} intensity={1.5} color="#fff8f0" castShadow />
         <directionalLight position={[-4, 3, -3]} intensity={0.4} color="#f0f4ff" />
@@ -554,15 +570,14 @@ export default function MonsterViewer({
                   animationSpeed={animSpeed}
                   onAnimationsLoaded={handleAnimsLoaded}
                 />
+                <FloorDetector key={modelUrl} onFloorY={handleFloorY} />
               </Stage>
-              {/* Shadow fixe à Y=0 (pieds des modèles de jeu) —
-                  indépendant de Stage pour ne pas bouger avec l'animation */}
               <ContactShadows
-                position={[0, -0.01, 0]}
+                position={[0, floorY, 0]}
                 opacity={0.5}
                 scale={10}
-                blur={3}
-                far={6}
+                blur={2.5}
+                far={2}
               />
             </GLBErrorBoundary>
           ) : (

@@ -74,7 +74,7 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
         return src
           ? <Image src={src} alt="" width={40} height={40} className="rounded" style={{ imageRendering: "pixelated" }} unoptimized />
           : <div className="w-10 h-10 rounded" style={{ background: "var(--border)" }} />;
-      },
+      }
     },
     { accessorKey: "name",        header: "Name" },
     { accessorKey: "internal",    header: "Internal ID", cell: (i) => <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{i.getValue() as string}</span> },
