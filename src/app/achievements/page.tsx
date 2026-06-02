@@ -1,14 +1,30 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import Image from "next/image";
 import DataTable from "@/components/ui/DataTable";
 import { type ColumnDef } from "@tanstack/react-table";
 import { Trophy, Sparkles } from "lucide-react";
 import { fetchGzJson, unrealPathToPublic } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface AchievementRow {
-  id: string; image: string; Title: string; Description: string; Category: string; Subcategory: string; isNew?: boolean;
+  id: string;
+  image: string;
+  Title: string;
+  TitleKey: string; // Key for translation
+  Description: string;
+  DescriptionKey: string; // Key for translation
+  Category: string;
+  CategoryKey: string; // Key for category translation
+  Subcategory: string;
+  SubcategoryKey: string; // Key for subcategory translation
+  isNew?: boolean;
+  // Champs pour la recherche (mis à jour avec les traductions)
+  TranslatedTitle?: string;
+  TranslatedDescription?: string;
+  TranslatedCategory?: string;
+  TranslatedSubcategory?: string;
 }
 interface VersionEntry { id: string; label: string; }
 
@@ -24,7 +40,10 @@ const ALL_FILES = [
   "TLAchievementLooks_World3",
 ];
 
-type CatMap = Record<string, { ParentCategory?: { RowName: string }; DisplayText?: { LocalizedString: string } }>;
+type CatMap = Record<string, {
+  ParentCategory?: { RowName: string };
+  DisplayText?: { LocalizedString: string; Key: string };
+}>;
 
 async function loadSnapshot(basePath: string, catMap: CatMap): Promise<Map<string, AchievementRow>> {
   const results = await Promise.all(ALL_FILES.map((f) => fetchGzJson(`${basePath}/${f}.gz`).catch(() => null)));
@@ -33,16 +52,39 @@ async function loadSnapshot(basePath: string, catMap: CatMap): Promise<Map<strin
     if (!fileData) continue;
     const rows = (fileData as { Rows: Record<string, unknown> }[])[0].Rows;
     for (const [rowId, v] of Object.entries(rows)) {
-      const e = v as { IconImage?: { AssetPathName: string }; TitleText?: { LocalizedString: string }; Description?: { LocalizedString: string }; Category?: { RowName: string } };
+      const e = v as {
+        IconImage?: { AssetPathName: string };
+        TitleText?: { LocalizedString: string; Key: string };
+        Description?: { LocalizedString: string; Key: string };
+        Category?: { RowName: string };
+      };
       const catRow = e.Category?.RowName ? catMap[e.Category.RowName] : undefined;
       if (!catRow) continue;
-      map.set(rowId, { id: rowId, image: unrealPathToPublic(e.IconImage?.AssetPathName), Title: e.TitleText?.LocalizedString ?? "", Description: e.Description?.LocalizedString ?? "", Category: catRow.ParentCategory?.RowName ?? "", Subcategory: catRow.DisplayText?.LocalizedString ?? "" });
+
+      // Trouver la catégorie parent
+      const parentCategoryName = catRow.ParentCategory?.RowName ?? "";
+      const parentCategory = parentCategoryName ? catMap[parentCategoryName] : undefined;
+
+      map.set(rowId, {
+        id: rowId,
+        image: unrealPathToPublic(e.IconImage?.AssetPathName),
+        Title: e.TitleText?.LocalizedString ?? "",
+        TitleKey: e.TitleText?.Key ?? "",
+        Description: e.Description?.LocalizedString ?? "",
+        DescriptionKey: e.Description?.Key ?? "",
+        Category: parentCategoryName,
+        CategoryKey: parentCategory?.DisplayText?.Key ?? "",
+        Subcategory: catRow.DisplayText?.LocalizedString ?? "",
+        SubcategoryKey: catRow.DisplayText?.Key ?? "",
+      });
     }
   }
   return map;
 }
 
 export default function AchievementsPage() {
+  const { t } = useTranslation("TLAchievementLooks");
+  const { t: tCategory } = useTranslation("TLStringAchievement");
   const [displayData, setDisplayData] = useState<AchievementRow[]>([]);
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<string>("all");
@@ -130,21 +172,57 @@ export default function AchievementsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVersion, versions.length, loading]);
 
+  // Enrichir les données avec les traductions pour que la recherche fonctionne
+  const translatedData = useMemo(() => {
+    return displayData.map((row) => ({
+      ...row,
+      TranslatedTitle: t(row.TitleKey, row.Title),
+      TranslatedDescription: t(row.DescriptionKey, row.Description),
+      TranslatedCategory: tCategory(row.CategoryKey, row.Category),
+      TranslatedSubcategory: tCategory(row.SubcategoryKey, row.Subcategory),
+    }));
+  }, [displayData, t, tCategory]);
+
   const columns: ColumnDef<AchievementRow, unknown>[] = [
     { accessorKey: "isNew", header: "", enableSorting: false, size: 32, cell: (i) => i.getValue() ? <span title="New in this version"><Sparkles size={14} className="text-yellow-400" /></span> : null },
     { accessorKey: "image", header: "Icon", enableSorting: false, cell: (i) => { const src = i.getValue() as string; return src ? <Image src={src} alt="" width={48} height={48} loading="lazy" className="rounded" unoptimized /> : null; } },
-    { accessorKey: "Title",       header: "Title" },
-    { accessorKey: "Description", header: "Description" },
-    { accessorKey: "Category",    header: "Category" },
-    { accessorKey: "Subcategory", header: "Subcategory" },
+    {
+      accessorKey: "TranslatedTitle",
+      header: "Title",
+      cell: (i) => i.getValue() as string
+    },
+    {
+      accessorKey: "TranslatedDescription",
+      header: "Description",
+      cell: (i) => i.getValue() as string
+    },
+    {
+      accessorKey: "TranslatedCategory",
+      header: "Category",
+      cell: (i) => i.getValue() as string
+    },
+    {
+      accessorKey: "TranslatedSubcategory",
+      header: "Subcategory",
+      cell: (i) => i.getValue() as string
+    },
   ];
 
-  const newCount = displayData.filter((r) => r.isNew).length;
+  const newCount = translatedData.filter((r) => r.isNew).length;
 
-  // Valeurs uniques pour les filtres (depuis displayData complet)
-  const allCategories = [...new Set(displayData.map((r) => r.Category).filter(Boolean))].sort();
+  // Valeurs uniques pour les filtres (depuis translatedData complet)
+  // On crée une map Category -> TranslatedCategory pour l'affichage
+  const categoryMap = new Map<string, string>();
+  const subcategoryMap = new Map<string, string>();
+
+  translatedData.forEach((r) => {
+    if (r.Category) categoryMap.set(r.Category, r.TranslatedCategory || r.Category);
+    if (r.Subcategory) subcategoryMap.set(r.Subcategory, r.TranslatedSubcategory || r.Subcategory);
+  });
+
+  const allCategories = [...new Set(translatedData.map((r) => r.Category).filter(Boolean))].sort();
   const allSubcategories = [...new Set(
-    displayData
+    translatedData
       .filter((r) => selectedCategories.size === 0 || selectedCategories.has(r.Category))
       .map((r) => r.Subcategory).filter(Boolean)
   )].sort();
@@ -155,7 +233,7 @@ export default function AchievementsPage() {
     return next;
   }
 
-  const tableData = displayData
+  const tableData = translatedData
     .filter((r) => !showOnlyNew || r.isNew)
     .filter((r) => selectedCategories.size === 0 || selectedCategories.has(r.Category))
     .filter((r) => selectedSubcategories.size === 0 || selectedSubcategories.has(r.Subcategory));
@@ -185,7 +263,7 @@ export default function AchievementsPage() {
         {selectedVersion !== "all" && !versionLoading && (
           <span className="text-xs px-2 py-1 rounded-full font-medium"
             style={{ background: "var(--gold-glow)", color: "var(--gold)", border: "1px solid var(--gold)" }}>
-            {displayData.length} achievements{newCount > 0 && ` · ✨ ${newCount} new`}
+            {translatedData.length} achievements{newCount > 0 && ` · ✨ ${newCount} new`}
           </span>
         )}
         {selectedVersion !== "all" && newCount > 0 && !versionLoading && (
@@ -225,7 +303,7 @@ export default function AchievementsPage() {
                           background: active ? "var(--accent-glow)" : "var(--bg-card)",
                           color: active ? "var(--accent-bright)" : "var(--text-secondary)",
                         }}>
-                        {cat}
+                        {categoryMap.get(cat) || cat}
                       </button>
                     );
                   })}
@@ -247,7 +325,7 @@ export default function AchievementsPage() {
                           background: active ? "var(--accent-glow)" : "var(--bg-card)",
                           color: active ? "var(--accent-bright)" : "var(--text-secondary)",
                         }}>
-                        {sub}
+                        {subcategoryMap.get(sub) || sub}
                       </button>
                     );
                   })}

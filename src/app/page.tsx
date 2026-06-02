@@ -15,14 +15,14 @@ type SectionConfig = {
 };
 
 const SECTIONS: SectionConfig[] = [
-  { key: "fishing",      href: "/fishing",                 Icon: Fish,       color: "var(--green)",  badge: "Updated", title: "Fishing",               desc: "Fishing levels, fish and habitats." },
-  { key: "achievements", href: "/achievements",            Icon: Trophy,     color: "var(--yellow)", badge: "Updated", title: "Achievements",          desc: "The complete list of achievements with icons." },
+  { key: "fishing",      href: "/fishing",                 Icon: Fish,       color: "var(--green)",  badge: "Translated", title: "Fishing",               desc: "Fishing levels, fish and habitats." },
+  { key: "achievements", href: "/achievements",            Icon: Trophy,     color: "var(--yellow)", badge: "Translated", title: "Achievements",          desc: "The complete list of achievements with icons." },
   { key: "articles",     href: "/articles",                Icon: BookOpen,   color: "var(--accent)",                title: "Articles",              desc: "Loot distribution rules and reference notes." },
   { key: "bestiary",     href: "/bestiary",                Icon: Skull,      color: "var(--red)",    badge: "New",   title: "3D Bestiary",           desc: "Explore game monsters with their animated 3D models." },
   { key: "calculator",   href: "/calculator/damage",       Icon: Calculator, color: "var(--accent)",                title: "Damage Calculator",     desc: "Calculate your damage, healing and DoTs in real time." },
   { key: "group_buffs",  href: "/calculator/group-buffs",  Icon: Users,      color: "var(--gold)",                  title: "Group Buff Calculator", desc: "Build parties and check min/max PvE buff coverage." },
   { key: "stats",        href: "/calculator/stats",          Icon: Calculator, color: "var(--accent)",                title: "Stats Calculator",      desc: "Explore base stat scaling and secondary formula curves." },
-  { key: "weapons",      href: "/weapons/bow",             Icon: Swords,     color: "var(--gold)",                  title: "Weapons skills",        desc: "All skills sorted by weapon type." },
+  { key: "weapons",      href: "/weapons/bow",             Icon: Swords,     color: "var(--gold)",  badge: "Translated", title: "Weapons skills",        desc: "All skills sorted by weapon type." },
 ];
 
 export default function HomePage() {

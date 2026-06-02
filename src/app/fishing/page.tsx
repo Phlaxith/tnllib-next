@@ -1,19 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import DataTable from "@/components/ui/DataTable";
 import { type ColumnDef } from "@tanstack/react-table";
 import { Fish, Sparkles } from "lucide-react";
 import { fetchGzJson, unrealPathToPublic } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 import Image from "next/image";
 
 interface FishRow {
   id: string;
   Icon: string;
   Name: string;
+  NameKey: string; // Key for translation
   Level: number;
   Habitat: string;
+  HabitatKeys: string[]; // Keys for region translations
   isNew?: boolean;
+  // Champs traduits
+  TranslatedName?: string;
+  TranslatedHabitat?: string;
 }
 interface VersionEntry { id: string; label: string; }
 
@@ -33,33 +39,47 @@ async function loadSnapshot(basePath: string): Promise<Map<string, FishRow>> {
     fetchWithFallback(basePath, "TLRegionGroup.gz"),
   ]);
 
-  const regionMap: Record<string, string> = {};
-  const regionRows = (regionRaw[0] as { Rows: Record<string, { UIName?: { LocalizedString: string } }> }).Rows;
+  const regionMap: Record<string, { name: string; key: string }> = {};
+  const regionRows = (regionRaw[0] as { Rows: Record<string, {
+    UIName?: { LocalizedString: string; Key: string }
+  }> }).Rows;
+
   for (const [key, val] of Object.entries(regionRows)) {
-    regionMap[key] = val.UIName?.LocalizedString ?? key;
+    regionMap[key] = {
+      name: val.UIName?.LocalizedString ?? key,
+      key: val.UIName?.Key ?? "",
+    };
   }
 
   const fishRows = (fishRaw[0] as { Rows: Record<string, {
     RegistIconPath?: { AssetPathName: string };
-    FishName?: { LocalizedString: string };
+    FishName?: { LocalizedString: string; Key: string };
     Level: number;
     HabitatInfo?: { HabitatList: { RowName: string }[] };
   }> }).Rows;
 
   const map = new Map<string, FishRow>();
   for (const [rowId, v] of Object.entries(fishRows)) {
+    const habitatList = v.HabitatInfo?.HabitatList ?? [];
+    const habitatNames = habitatList.map((h) => regionMap[h.RowName]?.name ?? h.RowName);
+    const habitatKeys = habitatList.map((h) => regionMap[h.RowName]?.key ?? "");
+
     map.set(rowId, {
       id: rowId,
       Icon: unrealPathToPublic(v.RegistIconPath?.AssetPathName),
       Name: v.FishName?.LocalizedString ?? "",
+      NameKey: v.FishName?.Key ?? "",
       Level: v.Level,
-      Habitat: v.HabitatInfo?.HabitatList.map((h) => regionMap[h.RowName] ?? h.RowName).join("\n") ?? "",
+      Habitat: habitatNames.join("\n"),
+      HabitatKeys: habitatKeys,
     });
   }
   return map;
 }
 
 export default function FishingPage() {
+  const { t: tFish } = useTranslation("TLStringContents");
+  const { t: tRegion } = useTranslation("TLRegionGroup");
   const [displayData, setDisplayData] = useState<FishRow[]>([]);
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<string>("all");
@@ -129,6 +149,24 @@ export default function FishingPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVersion, versions.length, loading]);
 
+  const translatedData = useMemo(() => {
+    return displayData.map((row) => {
+      // Translate each habitat
+      const translatedHabitats = row.HabitatKeys
+        .map((key, index) => {
+          if (!key) return row.Habitat.split("\n")[index] || "";
+          return tRegion(key, row.Habitat.split("\n")[index] || "");
+        })
+        .filter(Boolean);
+
+      return {
+        ...row,
+        TranslatedName: tFish(row.NameKey, row.Name),
+        TranslatedHabitat: translatedHabitats.join("\n"),
+      };
+    });
+  }, [displayData, tFish, tRegion]);
+
   const fishColumns: ColumnDef<FishRow, unknown>[] = [
     { accessorKey: "isNew", header: "", enableSorting: false, size: 32,
       cell: (i) => i.getValue() ? <span title="New in this version"><Sparkles size={14} className="text-yellow-400" /></span> : null,
@@ -141,15 +179,23 @@ export default function FishingPage() {
           : <div className="w-10 h-10 rounded" style={{ background: "var(--border)" }} />;
       },
     },
-    { accessorKey: "Name",    header: "Name" },
+    {
+      accessorKey: "TranslatedName",
+      header: "Name",
+      cell: (i) => i.getValue() as string
+    },
     { accessorKey: "Level",   header: "Level" },
-    { accessorKey: "Habitat", header: "Habitat", cell: (i) => (
-      <div style={{ whiteSpace: "pre-line", lineHeight: 1.5 }}>{i.getValue() as string}</div>
-    )},
+    {
+      accessorKey: "TranslatedHabitat",
+      header: "Habitat",
+      cell: (i) => (
+        <div style={{ whiteSpace: "pre-line", lineHeight: 1.5 }}>{i.getValue() as string}</div>
+      )
+    },
   ];
 
-  const newCount = displayData.filter((r) => r.isNew).length;
-  const tableData = displayData.filter((r) => !showOnlyNew || r.isNew);
+  const newCount = translatedData.filter((r) => r.isNew).length;
+  const tableData = translatedData.filter((r) => !showOnlyNew || r.isNew);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -173,7 +219,7 @@ export default function FishingPage() {
         {selectedVersion !== "all" && !versionLoading && (
           <span className="text-xs px-2 py-1 rounded-full font-medium"
             style={{ background: "var(--green-glow, var(--accent-glow))", color: "var(--green)", border: "1px solid var(--green)" }}>
-            {displayData.length} fish{newCount > 0 && ` · ✨ ${newCount} new`}
+            {translatedData.length} fish{newCount > 0 && ` · ✨ ${newCount} new`}
           </span>
         )}
         {selectedVersion !== "all" && newCount > 0 && !versionLoading && (

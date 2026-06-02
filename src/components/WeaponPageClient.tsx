@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import DataTable from "@/components/ui/DataTable";
 import { type ColumnDef } from "@tanstack/react-table";
-import { fetchGzJson, unrealPathToPublic } from "@/lib/utils";
+import { fetchGzJson, unrealPathToPublic, prefixPath } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 // Mapping slug → GZ filename (top of file, with WEAPON_ICON)
 const WEAPON_FILES: Record<string, string> = {
@@ -42,14 +43,18 @@ const WEAPON_NAMES: Record<string, string> = {
 interface SkillRow {
   icon: string;
   name: string;
+  nameKey: string; // Key for translation
   internal: string;
   type: string;
+  typeKey: string; // Key for type translation (if needed)
   delay: number | string;
   hitDelay: number | string;
   chargeDelay: number | string;
   mp: string | number;
   hp: string | number;
   cooldown: string | number;
+  TranslatedName?: string;
+  TranslatedType?: string;
 }
 
 interface WeaponPageClientProps {
@@ -57,38 +62,13 @@ interface WeaponPageClientProps {
 }
 
 export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
+  const { t: tSkill } = useTranslation("TLStringSkillDesc");
   const [data, setData] = useState<SkillRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const weaponFile = WEAPON_FILES[weapon];
   const weaponName = WEAPON_NAMES[weapon] ?? weapon;
-
-  const columns: ColumnDef<SkillRow, unknown>[] = useMemo(() => [
-    {
-      accessorKey: "icon",
-      header: "Icon",
-      enableSorting: false,
-      cell: (i) => {
-        const src = i.getValue() as string;
-        return src
-          ? <Image src={src} alt="" width={40} height={40} className="rounded" style={{ imageRendering: "pixelated" }} unoptimized />
-          : <div className="w-10 h-10 rounded" style={{ background: "var(--border)" }} />;
-      }
-    },
-    { accessorKey: "name",        header: "Name" },
-    { accessorKey: "internal",    header: "Internal ID", cell: (i) => <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{i.getValue() as string}</span> },
-    { accessorKey: "type",        header: "Type",        cell: (i) => {
-      const v = i.getValue() as string;
-      return v ? <span className="px-2 py-0.5 rounded text-xs" style={{ background: "var(--accent-glow)", color: "var(--accent-bright)" }}>{v}</span> : null;
-    }},
-    { accessorKey: "delay",       header: "Delay (s)" },
-    { accessorKey: "hitDelay",    header: "Hit delay (s)" },
-    { accessorKey: "chargeDelay", header: "Max charge (s)" },
-    { accessorKey: "mp",          header: "MP Cost" },
-    { accessorKey: "hp",          header: "HP Cost" },
-    { accessorKey: "cooldown",    header: "Cooldown (s)" },
-  ], []);
 
   useEffect(() => {
     // Guard: skip fetch for unknown weapon slugs
@@ -108,8 +88,16 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
 
         type FormulaRows = Record<string, { FormulaParameter?: { tooltip1?: string | number }[] }>;
         type OptionalRows = Record<string, Record<string, string>>;
-        type LooksRows = Record<string, { UIName?: { LocalizedString: string }; IconPath?: { AssetPathName: string } }>;
-        type SkillRows = Record<string, { damage_type?: string; skill_delay?: number; hit_delay?: number; max_charge_delay?: number }>;
+        type LooksRows = Record<string, {
+          UIName?: { LocalizedString: string; Key: string };
+          IconPath?: { AssetPathName: string }
+        }>;
+        type SkillRows = Record<string, {
+          damage_type?: string;
+          skill_delay?: number;
+          hit_delay?: number;
+          max_charge_delay?: number
+        }>;
 
         const formulaRows: FormulaRows = (formulaRaw as { Rows: FormulaRows }[])[0].Rows;
         const optionalRows: OptionalRows = (optionalRaw as { Rows: OptionalRows }[])[0].Rows;
@@ -129,12 +117,15 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
           const skill = skillRows[key] ?? {};
 
           const iconUrl = unrealPathToPublic(value.IconPath?.AssetPathName);
+          const damageType = skill.damage_type?.split("::k")[1] ?? "—";
 
           rows.push({
             icon:        iconUrl,
             name:        value.UIName?.LocalizedString ?? key,
+            nameKey:     value.UIName?.Key ?? "",
             internal:    key,
-            type:        skill.damage_type?.split("::k")[1] ?? "—",
+            type:        damageType,
+            typeKey:     skill.damage_type ?? "",
             delay:       skill.skill_delay ?? "—",
             hitDelay:    skill.hit_delay ?? "—",
             chargeDelay: skill.max_charge_delay ?? "—",
@@ -156,6 +147,80 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
     load();
   }, [weapon, weaponFile]);
 
+  const translatedData = useMemo(() => {
+    return data.map((row) => ({
+      ...row,
+      TranslatedName: tSkill(row.nameKey, row.name),
+      TranslatedType: row.type, // Le type reste en anglais pour l'instant
+    }));
+  }, [data, tSkill]);
+
+   const typeMap = useMemo(() => {
+    const map = new Map<string, string>();
+    translatedData.forEach((r) => {
+      if (r.type) map.set(r.type, r.TranslatedType || r.type);
+    });
+    return map;
+  }, [translatedData]);
+
+  const allTypes = useMemo(() =>
+    [...new Set(translatedData.map((r) => r.type).filter((t) => t && t !== "—"))].sort(),
+    [translatedData]
+  );
+
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
+
+  function toggleType(type: string) {
+    setSelectedTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  }
+
+  const tableData = useMemo(() => 
+    translatedData.filter((r) => selectedTypes.size === 0 || selectedTypes.has(r.type)),
+    [translatedData, selectedTypes]
+  );
+
+  const columns: ColumnDef<SkillRow, unknown>[] = useMemo(() => [
+    {
+      accessorKey: "icon",
+      header: "Icon",
+      enableSorting: false,
+      cell: (i) => {
+        const src = i.getValue() as string;
+        return src
+          ? <Image src={src} alt="" width={40} height={40} className="rounded" style={{ imageRendering: "pixelated" }} unoptimized />
+          : <div className="w-10 h-10 rounded" style={{ background: "var(--border)" }} />;
+      }
+    },
+    { 
+      accessorKey: "TranslatedName", 
+      header: "Name",
+      cell: (i) => i.getValue() as string
+    },
+    { accessorKey: "internal",    header: "Internal ID", cell: (i) => <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{i.getValue() as string}</span> },
+    { 
+      accessorKey: "TranslatedType",        
+      header: "Type",        
+      cell: (i) => {
+        const v = i.getValue() as string;
+        return v && v !== "—" ? <span className="px-2 py-0.5 rounded text-xs" style={{ background: "var(--accent-glow)", color: "var(--accent-bright)" }}>{v}</span> : null;
+      }
+    },
+    { accessorKey: "delay",       header: "Delay (s)" },
+    { accessorKey: "hitDelay",    header: "Hit delay (s)" },
+    { accessorKey: "chargeDelay", header: "Max charge (s)" },
+    { accessorKey: "mp",          header: "MP Cost" },
+    { accessorKey: "hp",          header: "HP Cost" },
+    { accessorKey: "cooldown",    header: "Cooldown (s)" },
+  ], []);
+
   // Guard: unknown weapon slug — rendered after all hooks
   if (!weaponFile) {
     return (
@@ -174,7 +239,7 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
           style={{ background: "var(--accent-glow)", border: "1px solid var(--border-bright)" }}
         >
           {WEAPON_ICON[weapon]
-            ? <Image src={WEAPON_ICON[weapon]} alt={weapon} width={36} height={36} style={{ objectFit: "contain" }} unoptimized />
+            ? <Image src={prefixPath(WEAPON_ICON[weapon])} alt={weapon} width={36} height={36} style={{ objectFit: "contain" }} unoptimized />
             : "⚔️"
           }
         </div>
@@ -200,9 +265,45 @@ export default function WeaponPageClient({ weapon }: WeaponPageClientProps) {
       {!loading && !error && (
         <>
           <div className="mb-3 text-sm" style={{ color: "var(--text-muted)" }}>
-            {data.length} skill{data.length > 1 ? "s" : ""}
+            {translatedData.length} skill{translatedData.length > 1 ? "s" : ""}
           </div>
-          <DataTable data={data} columns={columns} searchPlaceholder="Search a skill…" />
+
+          {/* Filtres de type */}
+          {allTypes.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wider self-center mr-2" style={{ color: "var(--text-muted)" }}>
+                Type:
+              </span>
+              {allTypes.map((type) => {
+                const active = selectedTypes.has(type);
+                return (
+                  <button
+                    key={type}
+                    onClick={() => toggleType(type)}
+                    className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                    style={{
+                      borderColor: active ? "var(--accent)" : "var(--border)",
+                      background: active ? "var(--accent-glow)" : "var(--bg-card)",
+                      color: active ? "var(--accent-bright)" : "var(--text-secondary)",
+                    }}
+                  >
+                    {typeMap.get(type) || type}
+                  </button>
+                );
+              })}
+              {selectedTypes.size > 0 && (
+                <button
+                  onClick={() => setSelectedTypes(new Set())}
+                  className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                  style={{ borderColor: "var(--border)", color: "var(--text-muted)", background: "var(--bg-card)" }}
+                >
+                  ✕ Reset
+                </button>
+              )}
+            </div>
+          )}
+
+          <DataTable data={tableData} columns={columns} searchPlaceholder="Search a skill…" />
         </>
       )}
     </div>

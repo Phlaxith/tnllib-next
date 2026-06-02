@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "./ThemeToggle";
+import LanguageSelector from "./LanguageSelector";
 
 type NavItem = {
   label: string;
@@ -125,6 +126,7 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="p-3 border-t flex flex-col gap-2" style={{ borderColor: "var(--border)" }}>
         <ThemeToggle />
+        <LanguageSelector />
         <div className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
           <a href="https://ko-fi.com/phlaxith" target="_blank" rel="noreferrer">☕ Ko-fi</a>
           {" · "}
