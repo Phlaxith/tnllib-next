@@ -79,12 +79,13 @@ async function loadSnapshot(basePath: string, catMap: CatMap): Promise<Map<strin
       });
     }
   }
+  console.log(map)
+
   return map;
 }
 
 export default function AchievementsPage() {
-  const { t } = useTranslation("TLAchievementLooks");
-  const { t: tCategory } = useTranslation("TLStringAchievement");
+  const { t } = useTranslation(["TLAchievementLooks", "TLStringAchievement", "TLStringContents"]);
   const [displayData, setDisplayData] = useState<AchievementRow[]>([]);
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<string>("all");
@@ -178,10 +179,10 @@ export default function AchievementsPage() {
       ...row,
       TranslatedTitle: t(row.TitleKey, row.Title),
       TranslatedDescription: t(row.DescriptionKey, row.Description),
-      TranslatedCategory: tCategory(row.CategoryKey, row.Category),
-      TranslatedSubcategory: tCategory(row.SubcategoryKey, row.Subcategory),
+      TranslatedCategory: t(row.CategoryKey, row.Category),
+      TranslatedSubcategory: t(row.SubcategoryKey, row.Subcategory),
     }));
-  }, [displayData, t, tCategory]);
+  }, [displayData, t]);
 
   const columns: ColumnDef<AchievementRow, unknown>[] = [
     { accessorKey: "isNew", header: "", enableSorting: false, size: 32, cell: (i) => i.getValue() ? <span title="New in this version"><Sparkles size={14} className="text-yellow-400" /></span> : null },
