@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import DataTable from "@/components/ui/DataTable";
 import { type ColumnDef } from "@tanstack/react-table";
 import { Fish, Sparkles } from "lucide-react";
-import { fetchGzJson, unrealPathToPublic } from "@/lib/utils";
+import {fetchGzJson, prefixPath, unrealPathToPublic} from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import Image from "next/image";
 
@@ -84,13 +84,6 @@ async function loadSnapshot(basePath: string): Promise<Map<string, FishRow>> {
     });
   }
 
-  // Afficher les poissons avec SpawnConditionDescription
-  const fishWithSpawnCondition = Array.from(map.values()).filter(fish => fish.SpawnConditionKey);
-  console.log(map)
-  console.log('Poissons avec SpawnConditionDescription:', fishWithSpawnCondition);
-  console.log('Nombre de poissons avec condition:', fishWithSpawnCondition.length);
-
-
   return map;
 }
 
@@ -132,7 +125,6 @@ export default function FishingPage() {
       }
     }
     load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -214,11 +206,11 @@ export default function FishingPage() {
 
         const habitatTypeMap: Record<string, { image: string; alt: string }> = {
           "ETLUIFishingHabitatType::FreshWater": {
-            image: "/Image/Icon/Fishing/Tex_Fishing_FilterIcon_River.png",
+            image: prefixPath("/Image/Icon/Fishing/Tex_Fishing_FilterIcon_River.png"),
             alt: "Fresh Water"
           },
           "ETLUIFishingHabitatType::Sea": {
-            image: "/Image/Icon/Fishing/Tex_Fishing_FilterIcon_Ocean.png",
+            image: prefixPath("/Image/Icon/Fishing/Tex_Fishing_FilterIcon_Ocean.png"),
             alt: "Sea"
           }
         };
