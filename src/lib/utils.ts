@@ -9,7 +9,9 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 /** Unreal Engine asset path → local public path */
 export function unrealPathToPublic(assetPath: string | undefined): string {
-  if (!assetPath) return "";
+  if (!assetPath || assetPath === "None" || !assetPath.startsWith("/Game")) {
+    return "";
+  }
   return `${BASE_PATH}${assetPath.split(".")[0].replace("/Game", "")}.png`;
 }
 
