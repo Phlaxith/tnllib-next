@@ -41,6 +41,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (locale === "en") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTranslations(null);
       setIsLoading(false);
       return;
     }
