@@ -7,6 +7,7 @@ interface I18nContextValue {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   translations: TranslationData | null;
+  fallbackTranslations: TranslationData | null;
   isLoading: boolean;
 }
 
@@ -22,28 +23,38 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     return "en";
   });
   const [translations, setTranslations] = useState<TranslationData | null>(null);
+  const [fallbackTranslations, setFallbackTranslations] = useState<TranslationData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Load English translations as fallback (only once)
+  useEffect(() => {
+    loadTranslations("en")
+        .then((data: TranslationData) => {
+          setFallbackTranslations(data);
+        })
+        .catch(() => {
+          setFallbackTranslations(null);
+        });
+  }, []);
 
   // Load translations on locale change
   useEffect(() => {
-    // no translation needed in english, already in game file default
     if (locale === "en") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTranslations(null);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     loadTranslations(locale)
-      .then((data: TranslationData) => {
-        setTranslations(data);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        setTranslations(null);
-        setIsLoading(false);
-      });
+        .then((data: TranslationData) => {
+          setTranslations(data);
+          setIsLoading(false);
+        })
+        .catch(() => {
+          setTranslations(null);
+          setIsLoading(false);
+        });
   }, [locale]);
 
   // Save preferences in localStorage
@@ -55,9 +66,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, translations, isLoading }}>
-      {children}
-    </I18nContext.Provider>
+      <I18nContext.Provider value={{ locale, setLocale, translations, fallbackTranslations, isLoading }}>
+        {children}
+      </I18nContext.Provider>
   );
 }
 
@@ -68,8 +79,3 @@ export function useI18n() {
   }
   return context;
 }
-
-
-
-
-

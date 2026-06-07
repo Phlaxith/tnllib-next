@@ -1,19 +1,12 @@
 import { useI18n } from "./I18nContext";
-import { translate, translateLocalizedString } from "./translations";
+import { translateLocalizedString } from "./translations";
 
-/**
- * Hook to use translations in a component
- * Return a function `t` that translate a given key
- */
 export function useTranslation(tableName: string | string[]) {
-  const { translations } = useI18n();
+  const { translations, fallbackTranslations } = useI18n();
 
-  /**
-   * Translate key or LocalizedString
-   */
   const t = (
-    keyOrLocalized: string | { LocalizedString: string } | undefined,
-    fallback = ""
+      keyOrLocalized: string | { LocalizedString: string } | undefined,
+      fallback = ""
   ): string => {
     if (!keyOrLocalized) {
       return fallback;
@@ -31,10 +24,14 @@ export function useTranslation(tableName: string | string[]) {
     const tableNames = Array.isArray(tableName) ? tableName : [tableName];
 
     for (const table of tableNames) {
-      const result = translate(translations, table, keyOrLocalized, keyOrLocalized);
-      // If result is different from the key, we found a translation
-      if (result && result !== keyOrLocalized) {
-        return result;
+      // Try to translate in current local
+      if (translations && translations[table] && translations[table][keyOrLocalized]) {
+        return translations[table][keyOrLocalized];
+      }
+
+      // Fallback on english if not found
+      if (fallbackTranslations && fallbackTranslations[table] && fallbackTranslations[table][keyOrLocalized]) {
+        return fallbackTranslations[table][keyOrLocalized];
       }
     }
 
@@ -43,4 +40,3 @@ export function useTranslation(tableName: string | string[]) {
 
   return { t };
 }
-

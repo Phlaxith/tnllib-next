@@ -21,7 +21,7 @@ Le système est déjà intégré dans l'application via le `I18nProvider` dans `
 
 Les fichiers de traductions doivent être placés dans :
 ```
-public/data/translations/{locale}/Game_3.34.1.gz
+public/data/translations/{locale}/Game.gz
 ```
 
 Locales supportées : `en`, `fr`, `de`, `es`, `ja`, `ko`, `zh`

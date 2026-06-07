@@ -10,13 +10,13 @@ Chaque page utilise une table spécifique. Par exemple :
 - Items → `TLItemLooks`
 - Fishing → `TLFishingFishInfo`
 
-Vérifiez dans le fichier `Game_3.34.1.gz` quelle table correspond à vos données :
+Vérifiez dans le fichier `Game.gz` quelle table correspond à vos données :
 
 ```javascript
 // Node.js - Explorer le fichier de traductions
 const fs = require('fs');
 const zlib = require('zlib');
-const data = fs.readFileSync('public/data/translations/fr/Game_3.34.1.gz');
+const data = fs.readFileSync('public/data/translations/fr/Game.gz');
 const json = JSON.parse(zlib.gunzipSync(data).toString());
 console.log('Tables disponibles:', Object.keys(json));
 ```

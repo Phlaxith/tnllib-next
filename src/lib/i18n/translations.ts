@@ -18,7 +18,7 @@ export async function loadTranslations(locale: Locale): Promise<TranslationData>
 
   try {
     // Charger le fichier de traductions (ajustez le nom de fichier selon vos besoins)
-    const data = await fetchGzJson(`/data/translations/${locale}/Game_3.34.2.gz`) as TranslationData;
+    const data = await fetchGzJson(`/data/translations/${locale}/Game.gz`) as TranslationData;
     translationCache.set(locale, data);
     return data;
   } catch (error) {
