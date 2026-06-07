@@ -16,10 +16,14 @@ interface FishRow {
   Level: number;
   Habitat: string;
   HabitatKeys: string[]; // Keys for region translations
+  UIHabitatType?: string;
+  SpawnConditionDescription?: string;
+  SpawnConditionKey?: string;
   isNew?: boolean;
-  // Champs traduits
+  // Translated fields for display
   TranslatedName?: string;
   TranslatedHabitat?: string;
+  TranslatedSpawnCondition?: string;
 }
 interface VersionEntry { id: string; label: string; }
 
@@ -56,7 +60,10 @@ async function loadSnapshot(basePath: string): Promise<Map<string, FishRow>> {
     FishName?: { LocalizedString: string; Key: string };
     Level: number;
     HabitatInfo?: { HabitatList: { RowName: string }[] };
+    UIHabitatType?: string;
+    SpawnConditionDescription?: { LocalizedString: string; Key: string };
   }> }).Rows;
+
 
   const map = new Map<string, FishRow>();
   for (const [rowId, v] of Object.entries(fishRows)) {
@@ -72,14 +79,23 @@ async function loadSnapshot(basePath: string): Promise<Map<string, FishRow>> {
       Level: v.Level,
       Habitat: habitatNames.join("\n"),
       HabitatKeys: habitatKeys,
+      UIHabitatType: v.UIHabitatType,
+      SpawnConditionKey: v.SpawnConditionDescription?.Key
     });
   }
+
+  // Afficher les poissons avec SpawnConditionDescription
+  const fishWithSpawnCondition = Array.from(map.values()).filter(fish => fish.SpawnConditionKey);
+  console.log(map)
+  console.log('Poissons avec SpawnConditionDescription:', fishWithSpawnCondition);
+  console.log('Nombre de poissons avec condition:', fishWithSpawnCondition.length);
+
+
   return map;
 }
 
 export default function FishingPage() {
-  const { t: tFish } = useTranslation("TLStringContents");
-  const { t: tRegion } = useTranslation("TLRegionGroup");
+  const { t } = useTranslation(["TLStringContents", "TLStringUX", "TLRegionGroup"]);
   const [displayData, setDisplayData] = useState<FishRow[]>([]);
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<string>("all");
@@ -155,17 +171,18 @@ export default function FishingPage() {
       const translatedHabitats = row.HabitatKeys
         .map((key, index) => {
           if (!key) return row.Habitat.split("\n")[index] || "";
-          return tRegion(key, row.Habitat.split("\n")[index] || "");
+          return t(key, row.Habitat.split("\n")[index] || "");
         })
         .filter(Boolean);
 
       return {
         ...row,
-        TranslatedName: tFish(row.NameKey, row.Name),
+        TranslatedName: t(row.NameKey, row.Name),
         TranslatedHabitat: translatedHabitats.join("\n"),
+        TranslatedSpawnCondition: t(row.SpawnConditionKey, row.SpawnConditionDescription)
       };
     });
-  }, [displayData, tFish, tRegion]);
+  }, [displayData, t]);
 
   const fishColumns: ColumnDef<FishRow, unknown>[] = [
     { accessorKey: "isNew", header: "", enableSorting: false, size: 32,
@@ -185,6 +202,55 @@ export default function FishingPage() {
       cell: (i) => i.getValue() as string
     },
     { accessorKey: "Level",   header: "Level" },
+    {
+      accessorKey: "UIHabitatType",
+      header: "Live in",
+      enableSorting: true,
+      size: 60,
+      cell: (i) => {
+        const type = i.getValue() as string;
+
+        if (!type) return null;
+
+        const habitatTypeMap: Record<string, { image: string; alt: string }> = {
+          "ETLUIFishingHabitatType::FreshWater": {
+            image: "/Image/Icon/Fishing/Tex_Fishing_FilterIcon_River.png",
+            alt: "Fresh Water"
+          },
+          "ETLUIFishingHabitatType::Sea": {
+            image: "/Image/Icon/Fishing/Tex_Fishing_FilterIcon_Ocean.png",
+            alt: "Sea"
+          }
+        };
+
+        const habitat = habitatTypeMap[type];
+        if (!habitat) return null;
+
+        return (
+            <Image
+                src={habitat.image}
+                alt={habitat.alt}
+                width={32}
+                height={32}
+                title={habitat.alt}
+                className="rounded"
+                unoptimized
+            />
+        );
+      }
+    },
+    {
+      accessorKey: "TranslatedSpawnCondition",
+      header: "Spawn Condition",
+      cell: (i) => {
+        const condition = i.getValue() as string | undefined;
+        return condition ? (
+            <span className="text-xs px-2 py-1 rounded" style={{ background: "var(--accent-glow)", color: "var(--accent)" }}>
+        {condition}
+      </span>
+        ) : null;
+      }
+    },
     {
       accessorKey: "TranslatedHabitat",
       header: "Habitat",
