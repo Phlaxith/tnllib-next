@@ -1,5 +1,6 @@
 [
   { "id": "all", "label": "All versions (latest)" },
-  { "id": "3.34.0", "label": "Update 3.34.0 - 14th May 2026" }
+  { "id": "3.34.0", "label": "Update 3.34.0 - 14th May 2026" },
+  { "id": "4.0.0", "label": "Update 4.0.0 - 25th June 2026" }
 ]
 
